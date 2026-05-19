@@ -1,4 +1,6 @@
 import base64
+import gzip
+import zlib
 from urllib.parse import unquote
 
 
@@ -74,6 +76,59 @@ def decode_base64(encoded_text):
     except Exception:
         return []
 
+def decode_compressed_base64(encoded_text):
+    try:
+        cleaned_text = encoded_text.strip()
+        decoded_bytes = base64.b64decode(cleaned_text, validate=True)
+
+        decoded_results = []
+
+        # Try Gzip decompression
+        try:
+            gzip_bytes = gzip.decompress(decoded_bytes)
+            gzip_text = gzip_bytes.decode("utf-8", errors="ignore")
+
+            if looks_readable(gzip_text):
+                decoded_results.append({
+                    "encoding": "Gzip Base64",
+                    "decoded_text": gzip_text
+                })
+
+        except Exception:
+            pass
+
+        # Try zlib/deflate decompression
+        try:
+            deflate_bytes = zlib.decompress(decoded_bytes)
+            deflate_text = deflate_bytes.decode("utf-8", errors="ignore")
+
+            if looks_readable(deflate_text):
+                decoded_results.append({
+                    "encoding": "Deflate Base64",
+                    "decoded_text": deflate_text
+                })
+
+        except Exception:
+            pass
+
+        # Try raw deflate
+        try:
+            raw_deflate_bytes = zlib.decompress(decoded_bytes, -zlib.MAX_WBITS)
+            raw_deflate_text = raw_deflate_bytes.decode("utf-8", errors="ignore")
+
+            if looks_readable(raw_deflate_text):
+                decoded_results.append({
+                    "encoding": "Raw Deflate Base64",
+                    "decoded_text": raw_deflate_text
+                })
+
+        except Exception:
+            pass
+
+        return decoded_results
+
+    except Exception:
+        return []
 
 def decode_url(encoded_text):
     try:
@@ -120,6 +175,7 @@ def decode_once(encoded_text):
     decoded_results = []
 
     decoded_results.extend(decode_base64(encoded_text))
+    decoded_results.extend(decode_compressed_base64(encoded_text))
     decoded_results.extend(decode_url(encoded_text))
     decoded_results.extend(decode_hex(encoded_text))
 
@@ -171,7 +227,7 @@ def decode_input(encoded_text, max_depth=3):
         all_results.append({
             "encoding": "Unknown",
             "decode_level": 0,
-            "decoded_text": "Unable to decode input as Base64, PowerShell UTF-16LE, URL encoding, or Hex."
+            "decoded_text": "Unable to decode input as Base64, PowerShell UTF-16LE, Gzip Base64, Deflate Base64, URL encoding, or Hex."
         })
 
     return all_results
