@@ -20,6 +20,18 @@ def print_analysis_result(analysis):
 
     if "batch_item" in analysis:
         print(f"Batch Item: {analysis.get('batch_item')}")
+        
+    case_context = analysis.get("case_context", {})
+
+    if case_context:
+        print("\nCase Context:")
+        print("------------------------------------")
+        print(f"Case ID: {case_context.get('case_id', '')}")
+        print(f"Analyst: {case_context.get('analyst', '')}")
+        print(f"Alert Source: {case_context.get('alert_source', '')}")
+        print(f"Hostname: {case_context.get('hostname', '')}")
+        print(f"Username: {case_context.get('username', '')}")
+        print(f"Analyst Notes: {case_context.get('analyst_notes', '')}")
 
     print("\nDecoded Output:")
     print("------------------------------------")
@@ -153,6 +165,25 @@ def print_summary(analysis_results):
     print(f"Highest Score: {highest_score}")
     print("====================================")
 
+def apply_case_context(analysis_results, args):
+    case_context = {
+        "case_id": args.case_id or "",
+        "analyst": args.analyst or "",
+        "alert_source": args.alert_source or "",
+        "hostname": args.hostname or "",
+        "username": args.username or "",
+        "analyst_notes": args.notes or ""
+    }
+
+    has_context = any(value for value in case_context.values())
+
+    if not has_context:
+        return analysis_results
+
+    for result in analysis_results:
+        result["case_context"] = case_context
+
+    return analysis_results
 
 def export_results(analysis_results):
     if not analysis_results:
@@ -208,7 +239,36 @@ def build_parser():
         action="store_true",
         help="Launch the Tkinter GUI."
     )
+    
+    parser.add_argument(
+        "--case-id",
+        help="Case or incident ID to include in exported reports."
+    )
 
+    parser.add_argument(
+        "--analyst",
+        help="Analyst name to include in exported reports."
+    )
+
+    parser.add_argument(
+        "--alert-source",
+        help="Alert source or tool name to include in exported reports."
+    )
+
+    parser.add_argument(
+        "--hostname",
+        help="Hostname related to the investigation."
+    )
+
+    parser.add_argument(
+        "--username",
+        help="Username related to the investigation."
+    )
+
+    parser.add_argument(
+        "--notes",
+        help="Analyst notes to include in exported reports."
+    )
     return parser
 
 
@@ -237,6 +297,8 @@ def main():
         print()
         parser.print_help()
         return
+
+    analysis_results = apply_case_context(analysis_results, args)
 
     for analysis in analysis_results:
         print_analysis_result(analysis)

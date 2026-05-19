@@ -22,6 +22,12 @@ def export_to_csv(analysis_results):
     with open(file_path, "w", newline="", encoding="utf-8") as file:
         fieldnames = [
             "timestamp",
+            "case_id",
+            "analyst",
+            "alert_source",
+            "hostname",
+            "username",
+            "analyst_notes",
             "batch_item",
             "source_file",
             "original_input",
@@ -55,9 +61,17 @@ def export_to_csv(analysis_results):
             detection_rule_values.append(
                 f"{rule.get('rule_name')} ({rule.get('severity')})"
             )
-        
+            
+            case_context = result.get("case_context", {})
+            
             writer.writerow({
                 "timestamp": result.get("timestamp", ""),
+                "case_id": case_context.get("case_id", ""),
+                "analyst": case_context.get("analyst", ""),
+                "alert_source": case_context.get("alert_source", ""),
+                "hostname": case_context.get("hostname", ""),
+                "username": case_context.get("username", ""),
+                "analyst_notes": case_context.get("analyst_notes", ""),
                 "batch_item": result.get("batch_item", ""),
                 "source_file": result.get("source_file", ""),
                 "original_input": result.get("original_input", ""),
@@ -97,6 +111,22 @@ def export_to_markdown(analysis_results):
         file.write(f"- Total Results: {len(analysis_results)}\n")
         file.write(f"- Highest Risk: {highest_risk}\n")
         file.write(f"- Highest Score: {highest_score}\n\n")
+        
+        case_context = {}
+
+        for result in analysis_results:
+            if result.get("case_context"):
+                case_context = result.get("case_context", {})
+                break
+
+        if case_context:
+            file.write("## Case Context\n\n")
+            file.write(f"- Case ID: {case_context.get('case_id', '')}\n")
+            file.write(f"- Analyst: {case_context.get('analyst', '')}\n")
+            file.write(f"- Alert Source: {case_context.get('alert_source', '')}\n")
+            file.write(f"- Hostname: {case_context.get('hostname', '')}\n")
+            file.write(f"- Username: {case_context.get('username', '')}\n")
+            file.write(f"- Analyst Notes: {case_context.get('analyst_notes', '')}\n\n")
 
         file.write("---\n\n")
 
@@ -339,6 +369,26 @@ def export_to_html(analysis_results):
         file.write(f'<p><strong>Highest Risk:</strong> <span class="{risk_class}">{escape_html(highest_risk)}</span></p>\n')
         file.write(f"<p><strong>Highest Score:</strong> {highest_score}</p>\n")
         file.write("</div>\n")
+        
+        case_context = {}
+
+        for result in analysis_results:
+            if result.get("case_context"):
+                case_context = result.get("case_context", {})
+                break
+
+        if case_context:
+            file.write('<div class="summary">\n')
+            file.write("<h2>Case Context</h2>\n")
+            file.write("<ul>\n")
+            file.write(f"<li><strong>Case ID:</strong> {escape_html(case_context.get('case_id', ''))}</li>\n")
+            file.write(f"<li><strong>Analyst:</strong> {escape_html(case_context.get('analyst', ''))}</li>\n")
+            file.write(f"<li><strong>Alert Source:</strong> {escape_html(case_context.get('alert_source', ''))}</li>\n")
+            file.write(f"<li><strong>Hostname:</strong> {escape_html(case_context.get('hostname', ''))}</li>\n")
+            file.write(f"<li><strong>Username:</strong> {escape_html(case_context.get('username', ''))}</li>\n")
+            file.write(f"<li><strong>Analyst Notes:</strong> {escape_html(case_context.get('analyst_notes', ''))}</li>\n")
+            file.write("</ul>\n")
+            file.write("</div>\n")
 
         for index, result in enumerate(analysis_results, start=1):
             risk_level = result.get("risk_level", "None")
