@@ -40,7 +40,8 @@ def export_to_csv(analysis_results):
             "risk_score",
             "reasons",
             "mitre_attack",
-            "detection_rules"
+            "detection_rules",
+            "detection_templates"
         ]
 
         writer = csv.DictWriter(file, fieldnames=fieldnames)
@@ -64,6 +65,13 @@ def export_to_csv(analysis_results):
             
             case_context = result.get("case_context", {})
             
+            detection_template_values = []
+
+            for template in result.get("detection_templates", []):
+                detection_template_values.append(
+                    f"{template.get('template_name')} ({template.get('template_type')} - {template.get('severity')})"
+                )
+            
             writer.writerow({
                 "timestamp": result.get("timestamp", ""),
                 "case_id": case_context.get("case_id", ""),
@@ -84,7 +92,8 @@ def export_to_csv(analysis_results):
                 "risk_score": result.get("risk_score", ""),
                 "reasons": " | ".join(result.get("reasons", [])),
                 "mitre_attack": " | ".join(mitre_values),
-                "detection_rules": " | ".join(detection_rule_values)
+                "detection_rules": " | ".join(detection_rule_values),
+                "detection_templates": " | ".join(detection_template_values)
             })
 
     return file_path
@@ -209,9 +218,28 @@ def export_to_markdown(analysis_results):
                     file.write(f"  - Reason: {rule.get('reason')}\n")
             else:
                 file.write("- No detection rule mappings identified.\n")
+                
+            file.write("\n")
+
+            file.write("### Detection Templates\n\n")
+
+            detection_templates = result.get("detection_templates", [])
+
+            if detection_templates:
+                for template in detection_templates:
+                    file.write(f"- {template.get('template_name')}\n")
+                    file.write(f"  - Type: {template.get('template_type')}\n")
+                    file.write(f"  - Severity: {template.get('severity')}\n")
+                    file.write(f"  - Description: {template.get('description')}\n")
+                    file.write("  - Query:\n\n")
+                    file.write("```text\n")
+                    file.write(f"{template.get('query', '')}\n")
+                    file.write("```\n\n")
+            else:
+                file.write("- No detection templates identified.\n")
 
             file.write("\n---\n\n")
-
+        
     return file_path
     
 def export_to_html(analysis_results):
@@ -484,6 +512,25 @@ def export_to_html(analysis_results):
                     file.write("</div>\n")
             else:
                 file.write('<p class="muted">No detection rule mappings identified.</p>\n')
+            file.write("</div>\n")
+            
+            file.write('<div class="section">\n')
+            file.write("<h3>Detection Templates</h3>\n")
+            detection_templates = result.get("detection_templates", [])
+
+            if detection_templates:
+                for template in detection_templates:
+                    file.write('<div class="rule-card">\n')
+                    file.write(f"<strong>{escape_html(template.get('template_name'))}</strong><br>\n")
+                    file.write(f"<span class='muted'>Type:</span> {escape_html(template.get('template_type'))}<br>\n")
+                    file.write(f"<span class='muted'>Severity:</span> {escape_html(template.get('severity'))}<br>\n")
+                    file.write(f"<span class='muted'>Description:</span> {escape_html(template.get('description'))}<br>\n")
+                    file.write("<span class='muted'>Query:</span>\n")
+                    file.write(f"<pre>{escape_html(template.get('query', ''))}</pre>\n")
+                    file.write("</div>\n")
+            else:
+                file.write('<p class="muted">No detection templates identified.</p>\n')
+
             file.write("</div>\n")
 
             file.write("</div>\n")

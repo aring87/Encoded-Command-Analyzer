@@ -7,6 +7,7 @@
 ![Interface](https://img.shields.io/badge/Interface-CLI%20%7C%20GUI-purple)
 ![MITRE ATT&CK](https://img.shields.io/badge/MITRE-ATT%26CK-orange)
 ![Detection Mapping](https://img.shields.io/badge/Detection-Rule%20Mapping-red)
+![Templates](https://img.shields.io/badge/Templates-Sigma%20%7C%20Sentinel-blue)
 ![Configurable Rules](https://img.shields.io/badge/Rules-Configurable-blue)
 ![Case Context](https://img.shields.io/badge/Case-Context-informational)
 ![Exports](https://img.shields.io/badge/Exports-JSON%20%7C%20CSV%20%7C%20Markdown%20%7C%20HTML-yellow)
@@ -19,15 +20,15 @@
 
 **Encoded Command Analyzer** is a Python-based detection engineering utility for decoding and analyzing encoded command-line content.
 
-The tool is designed to help security analysts and detection engineers triage suspicious commands, identify signs of PowerShell abuse, detect common obfuscation patterns, map findings to MITRE ATT&CK techniques, suggest related detection rule ideas, and produce analyst-friendly investigation reports.
+The tool is designed to help security analysts and detection engineers triage suspicious commands, identify signs of PowerShell abuse, detect common obfuscation patterns, map findings to MITRE ATT&CK techniques, suggest related detection rule ideas, generate starter Sigma and Microsoft Sentinel KQL templates, and produce analyst-friendly investigation reports.
 
-This project started as a simple Base64 decoder and has expanded into a lightweight encoded command analysis tool with CLI support, GUI support, batch file analysis, chained decoding, compressed Base64 support, XOR Hex decoding, suspicious keyword detection, configurable keyword rules, risk scoring, MITRE ATT&CK mapping, detection rule mapping, analyst-ready exports, unit testing, Windows executable packaging, HTML report generation, and case context enrichment.
+This project started as a simple Base64 decoder and has expanded into a lightweight encoded command analysis tool with CLI support, GUI support, batch file analysis, chained decoding, compressed Base64 support, XOR Hex decoding, suspicious keyword detection, configurable keyword rules, risk scoring, MITRE ATT&CK mapping, detection rule mapping, detection template generation, analyst-ready exports, unit testing, Windows executable packaging, HTML report generation, and optional case context enrichment.
 
 ---
 
 ## Current Version
 
-**Version 23**
+**Version 24**
 
 ### Current Capabilities
 
@@ -51,8 +52,10 @@ This project started as a simple Base64 decoder and has expanded into a lightwei
 - Map suspicious indicators to MITRE ATT&CK techniques
 - Suggest related detection rule ideas
 - Identify possible log sources for detection engineering
-- Add case context to investigation results
-- Add analyst notes to exported reports
+- Generate starter Sigma detection templates
+- Generate starter Microsoft Sentinel KQL detection templates
+- Add optional case context to investigation results
+- Add optional analyst notes to exported reports
 - Export analysis results to JSON
 - Export analysis results to CSV
 - Export analyst triage reports to Markdown and HTML
@@ -107,9 +110,9 @@ This tool provides a simple way to decode suspicious content and quickly review 
 
 ## Case Context Enrichment
 
-Version 23 adds analyst case context fields.
+The tool supports optional analyst case context fields.
 
-Case context can be included in exported reports using CLI arguments.
+Case context is **not shown by default**. It only appears in the console and exported reports when explicitly provided through CLI arguments.
 
 Supported case fields:
 
@@ -125,7 +128,7 @@ Supported case fields:
 Example:
 
 ```powershell
-python base64_decoder.py --input "cG93ZXJzaGVsbCUyRWV4ZSUyMC1lbmMlMjBJRVg=" --export --case-id "INC-1001" --analyst "Adam Ring" --alert-source "Microsoft Defender" --hostname "WIN-TEST01" --username "test.user" --notes "Suspicious encoded PowerShell observed in process command line."
+python base64_decoder.py --input "cG93ZXJzaGVsbCUyRWV4ZSUyMC1lbmMlMjBJRVg=" --export --case-id "INC-1001" --analyst "SOC Analyst" --alert-source "Microsoft Defender" --hostname "WIN-TEST01" --username "test.user" --notes "Suspicious encoded PowerShell observed in process command line."
 ```
 
 The case context is included in:
@@ -137,7 +140,7 @@ output/triage_report.md
 output/triage_report.html
 ```
 
-This makes the exported reports more useful as investigation artifacts.
+For public examples, use generic values such as `SOC Analyst` or `Analyst Name`.
 
 ---
 
@@ -244,6 +247,41 @@ Detection rule mappings are suggestions and should be tuned for the target envir
 
 ---
 
+## Detection Templates
+
+Version 24 adds starter detection templates.
+
+When suspicious decoded content matches known patterns, the tool can suggest starter detection templates such as:
+
+- Sigma rules
+- Microsoft Sentinel KQL queries
+
+Example decoded command:
+
+```text
+powershell.exe -enc IEX
+```
+
+Example generated templates:
+
+```text
+Sigma: Suspicious PowerShell EncodedCommand
+Microsoft Sentinel KQL: PowerShell EncodedCommand Execution
+Microsoft Sentinel KQL: PowerShell Invoke-Expression Usage
+```
+
+Detection templates may include:
+
+- Template name
+- Template type
+- Severity
+- Description
+- Query or rule body
+
+These templates are intended as starting points and should be reviewed, tested, and tuned before production use.
+
+---
+
 ## Suspicious Keyword Detection
 
 The tool checks decoded content for suspicious or investigation-relevant keywords.
@@ -331,6 +369,11 @@ MITRE ATT&CK Mapping:
 Detection Rule Mapping:
 - Suspicious PowerShell EncodedCommand Execution
 - PowerShell Invoke-Expression Usage
+
+Detection Templates:
+- Sigma: Suspicious PowerShell EncodedCommand
+- Microsoft Sentinel KQL: PowerShell EncodedCommand Execution
+- Microsoft Sentinel KQL: PowerShell Invoke-Expression Usage
 ```
 
 XOR Hex detection is confidence-based and intended to help analysts identify suspicious strings during triage.
@@ -349,6 +392,7 @@ The project includes a Tkinter-based GUI that allows analysts to:
 - View risk score and reasons
 - Review MITRE ATT&CK mappings
 - Review detection rule mappings
+- Review detection templates
 - Export results to JSON, CSV, Markdown, and HTML
 - Clear and rerun analysis
 
@@ -385,10 +429,10 @@ python base64_decoder.py --input "cG93ZXJzaGVsbCUyRWV4ZSUyMC1lbmMlMjBJRVg="
 python base64_decoder.py --input "534c544651504b464f4f0d465b46030e464d40036a667b"
 ```
 
-### Analyze with Case Context
+### Analyze with Optional Case Context
 
 ```powershell
-python base64_decoder.py --input "cG93ZXJzaGVsbCUyRWV4ZSUyMC1lbmMlMjBJRVg=" --export --case-id "INC-1001" --analyst "Adam Ring" --alert-source "Microsoft Defender" --hostname "WIN-TEST01" --username "test.user" --notes "Suspicious encoded PowerShell observed in process command line."
+python base64_decoder.py --input "cG93ZXJzaGVsbCUyRWV4ZSUyMC1lbmMlMjBJRVg=" --export --case-id "INC-1001" --analyst "SOC Analyst" --alert-source "Microsoft Defender" --hostname "WIN-TEST01" --username "test.user" --notes "Suspicious encoded PowerShell observed in process command line."
 ```
 
 ### Analyze a Batch File
@@ -447,7 +491,7 @@ Build artifacts such as `build/`, `dist/`, and `*.spec` are intentionally exclud
 | `base64_decoder.py` | CLI entry point and command-line argument handler |
 | `encoded_command_gui.py` | Tkinter GUI entry point |
 | `decoder_engine.py` | Decoding logic for Base64, UTF-16LE, URL, Hex, chained decoding, compressed Base64, and XOR Hex |
-| `detection_engine.py` | Suspicious keyword detection, configurable keyword loading, risk scoring, analysis logic, MITRE ATT&CK mapping, and detection rule mapping |
+| `detection_engine.py` | Suspicious keyword detection, configurable keyword loading, risk scoring, analysis logic, MITRE ATT&CK mapping, detection rule mapping, and detection template mapping |
 | `report_exporter.py` | JSON, CSV, Markdown, and HTML export functions |
 | `config/keyword_rules.json` | Configurable suspicious keyword rules |
 | `samples/` | Sample input files for testing |
@@ -639,6 +683,11 @@ MITRE ATT&CK Mapping:
 Detection Rule Mapping:
 - Suspicious PowerShell EncodedCommand Execution
 - PowerShell Invoke-Expression Usage
+
+Detection Templates:
+- Sigma: Suspicious PowerShell EncodedCommand
+- Microsoft Sentinel KQL: PowerShell EncodedCommand Execution
+- Microsoft Sentinel KQL: PowerShell Invoke-Expression Usage
 ```
 
 ---
@@ -668,6 +717,11 @@ MITRE ATT&CK Mapping:
 Detection Rule Mapping:
 - Suspicious PowerShell EncodedCommand Execution
 - PowerShell Invoke-Expression Usage
+
+Detection Templates:
+- Sigma: Suspicious PowerShell EncodedCommand
+- Microsoft Sentinel KQL: PowerShell EncodedCommand Execution
+- Microsoft Sentinel KQL: PowerShell Invoke-Expression Usage
 ```
 
 ---
@@ -697,6 +751,11 @@ MITRE ATT&CK Mapping:
 Detection Rule Mapping:
 - Suspicious PowerShell EncodedCommand Execution
 - PowerShell Invoke-Expression Usage
+
+Detection Templates:
+- Sigma: Suspicious PowerShell EncodedCommand
+- Microsoft Sentinel KQL: PowerShell EncodedCommand Execution
+- Microsoft Sentinel KQL: PowerShell Invoke-Expression Usage
 ```
 
 ---
@@ -732,6 +791,11 @@ MITRE ATT&CK Mapping:
 Detection Rule Mapping:
 - Suspicious PowerShell EncodedCommand Execution
 - PowerShell Invoke-Expression Usage
+
+Detection Templates:
+- Sigma: Suspicious PowerShell EncodedCommand
+- Microsoft Sentinel KQL: PowerShell EncodedCommand Execution
+- Microsoft Sentinel KQL: PowerShell Invoke-Expression Usage
 ```
 
 ---
@@ -796,6 +860,11 @@ MITRE ATT&CK Mapping:
 Detection Rule Mapping:
 - Suspicious PowerShell EncodedCommand Execution
 - PowerShell Invoke-Expression Usage
+
+Detection Templates:
+- Sigma: Suspicious PowerShell EncodedCommand
+- Microsoft Sentinel KQL: PowerShell EncodedCommand Execution
+- Microsoft Sentinel KQL: PowerShell Invoke-Expression Usage
 ```
 
 ---
@@ -860,6 +929,7 @@ Exported fields include:
 - Risk reasons
 - MITRE ATT&CK mappings
 - Detection rule mappings
+- Detection templates
 
 ---
 
@@ -868,7 +938,7 @@ Exported fields include:
 The generated Markdown triage report includes:
 
 - Summary
-- Case context
+- Optional case context
 - Total results
 - Highest risk level
 - Highest score
@@ -879,6 +949,7 @@ The generated Markdown triage report includes:
 - Risk reasons
 - MITRE ATT&CK mappings
 - Detection rule mappings
+- Detection templates
 
 The report is saved to:
 
@@ -893,7 +964,7 @@ output/triage_report.md
 The generated HTML report includes:
 
 - Executive-style summary
-- Case context
+- Optional case context
 - Highest risk level
 - Total result count
 - Finding-by-finding breakdown
@@ -903,6 +974,7 @@ The generated HTML report includes:
 - Risk score and reasons
 - MITRE ATT&CK mappings
 - Detection rule mappings
+- Detection templates
 - Dark-themed browser-friendly formatting
 
 The report is saved to:
@@ -925,15 +997,16 @@ start output\triage_report.html
 1. Copy suspicious encoded command from an alert.
 2. Open Encoded Command Analyzer.
 3. Paste the encoded value or load a batch file.
-4. Add case context when needed.
+4. Add optional case context when needed.
 5. Run analysis.
 6. Review decoded output.
 7. Review suspicious keyword matches.
 8. Review risk score and reasons.
 9. Review MITRE ATT&CK mappings.
 10. Review detection rule mappings.
-11. Export results to JSON, CSV, Markdown, or HTML.
-12. Attach output to triage notes or investigation documentation.
+11. Review suggested Sigma or Sentinel detection templates.
+12. Export results to JSON, CSV, Markdown, or HTML.
+13. Attach output to triage notes or investigation documentation.
 ```
 
 ---
@@ -952,6 +1025,8 @@ This project can support:
 - Investigation enrichment
 - ATT&CK mapping practice
 - Detection rule development
+- Sigma rule drafting
+- Microsoft Sentinel KQL drafting
 - Portfolio demonstration for detection engineering roles
 - Case documentation and analyst reporting
 
@@ -977,10 +1052,11 @@ It is not intended to execute decoded content.
 
 Planned upgrades:
 
-- Version 24: Add Sigma or Sentinel rule templates
 - Version 25: Add detection coverage summary
 - Version 26: Add GUI case context fields
 - Version 27: Add report branding or custom headers
+- Version 28: Add external detection template files
+- Version 29: Add YAML-based detection template library
 
 ---
 
@@ -989,6 +1065,8 @@ Planned upgrades:
 This tool is intended for defensive security, detection engineering, malware analysis support, and security training purposes only.
 
 Decoded content should always be reviewed carefully in a controlled environment.
+
+Generated detection templates are starter templates and should be validated, tested, and tuned before production deployment.
 
 ---
 
