@@ -83,7 +83,15 @@ class EncodedCommandAnalyzerGUI:
     def display_analysis(self, analysis):
         self.output_box.insert(tk.END, "====================================\n")
         self.output_box.insert(tk.END, f"Timestamp: {analysis['timestamp']}\n")
-        self.output_box.insert(tk.END, f"Detected Encoding: {analysis['encoding']}\n\n")
+        self.output_box.insert(tk.END, f"Detected Encoding: {analysis['encoding']}\n")
+
+        if "decode_level" in analysis:
+            self.output_box.insert(tk.END, f"Decode Level: {analysis['decode_level']}\n")
+
+        if "source_encoding" in analysis:
+            self.output_box.insert(tk.END, f"Source Encoding: {analysis['source_encoding']}\n")
+
+        self.output_box.insert(tk.END, "\n")
 
         self.output_box.insert(tk.END, "Decoded Output:\n")
         self.output_box.insert(tk.END, "------------------------------------\n")

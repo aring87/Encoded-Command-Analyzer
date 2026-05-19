@@ -23,6 +23,8 @@ def export_to_csv(analysis_results):
         fieldnames = [
             "timestamp",
             "encoding",
+            "decode_level",
+            "source_encoding",
             "decoded_text",
             "suspicious_keywords",
             "risk_level",
@@ -35,13 +37,15 @@ def export_to_csv(analysis_results):
 
         for result in analysis_results:
             writer.writerow({
-                "timestamp": result["timestamp"],
-                "encoding": result["encoding"],
-                "decoded_text": result["decoded_text"],
-                "suspicious_keywords": ", ".join(result["suspicious_keywords"]),
-                "risk_level": result["risk_level"],
-                "risk_score": result["risk_score"],
-                "reasons": " | ".join(result["reasons"])
+                "timestamp": result.get("timestamp", ""),
+                "encoding": result.get("encoding", ""),
+                "decode_level": result.get("decode_level", ""),
+                "source_encoding": result.get("source_encoding", ""),
+                "decoded_text": result.get("decoded_text", ""),
+                "suspicious_keywords": ", ".join(result.get("suspicious_keywords", [])),
+                "risk_level": result.get("risk_level", ""),
+                "risk_score": result.get("risk_score", ""),
+                "reasons": " | ".join(result.get("reasons", []))
             })
 
     return file_path

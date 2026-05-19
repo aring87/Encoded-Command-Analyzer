@@ -1,21 +1,58 @@
 import base64
 from urllib.parse import unquote
 
+
+SUSPICIOUS_HINTS = [
+    "powershell",
+    "-enc",
+    "-encodedcommand",
+    "iex",
+    "cmd",
+    "http",
+    "https",
+    "wscript",
+    "cscript"
+]
+
+
+def looks_readable(text):
+    if not text or not text.strip():
+        return False
+
+    lowered_text = text.lower()
+
+    if any(hint in lowered_text for hint in SUSPICIOUS_HINTS):
+        return True
+
+    readable_characters = 0
+
+    for character in text:
+        if character.isascii() and (character.isprintable() or character in "\r\n\t"):
+            readable_characters += 1
+
+    readable_ratio = readable_characters / len(text)
+
+    return readable_ratio >= 0.85
+
+
 def decode_base64(encoded_text):
     try:
-        decoded_bytes = base64.b64decode(encoded_text)
+        cleaned_text = encoded_text.strip()
+        decoded_bytes = base64.b64decode(cleaned_text, validate=True)
 
         decoded_results = []
 
         try:
             utf16_text = decoded_bytes.decode("utf-16le")
 
-            if any(keyword in utf16_text.lower() for keyword in ["powershell", "-enc", "iex", "cmd", "http"]):
+            if looks_readable(utf16_text):
                 decoded_results.append({
                     "encoding": "UTF-16LE",
                     "decoded_text": utf16_text
                 })
-                return decoded_results
+
+                if any(hint in utf16_text.lower() for hint in SUSPICIOUS_HINTS):
+                    return decoded_results
 
         except UnicodeDecodeError:
             pass
@@ -23,7 +60,7 @@ def decode_base64(encoded_text):
         try:
             utf8_text = decoded_bytes.decode("utf-8")
 
-            if "\x00" not in utf8_text:
+            if looks_readable(utf8_text):
                 decoded_results.append({
                     "encoding": "UTF-8",
                     "decoded_text": utf8_text
@@ -32,50 +69,28 @@ def decode_base64(encoded_text):
         except UnicodeDecodeError:
             pass
 
-        try:
-            utf16_text = decoded_bytes.decode("utf-16le")
-
-            if "\x00" not in utf16_text and utf16_text.strip():
-                decoded_results.append({
-                    "encoding": "UTF-16LE",
-                    "decoded_text": utf16_text
-                })
-
-        except UnicodeDecodeError:
-            pass
-
-        if not decoded_results:
-            decoded_results.append({
-                "encoding": "Unknown",
-                "decoded_text": decoded_bytes.decode("utf-8", errors="ignore")
-            })
-
         return decoded_results
 
-    except Exception as error:
-        return [{
-            "encoding": "Error",
-            "decoded_text": f"Error decoding Base64: {error}"
-        }]
+    except Exception:
+        return []
+
 
 def decode_url(encoded_text):
     try:
-        decoded_text = unquote(encoded_text)
-        
-        if decoded_text != encoded_text:
+        decoded_text = unquote(encoded_text.strip())
+
+        if decoded_text != encoded_text and looks_readable(decoded_text):
             return [{
                 "encoding": "URL",
                 "decoded_text": decoded_text
             }]
-        
+
         return []
-        
-    except Exception as error:
-        return [{
-            "encoding": "Error",
-            "decoded_text": f"Error decoding URL encoding: {error}"
-        }]
-        
+
+    except Exception:
+        return []
+
+
 def decode_hex(encoded_text):
     try:
         cleaned_text = encoded_text.strip().replace(" ", "").replace("0x", "")
@@ -89,7 +104,7 @@ def decode_hex(encoded_text):
         decoded_bytes = bytes.fromhex(cleaned_text)
         decoded_text = decoded_bytes.decode("utf-8", errors="ignore")
 
-        if decoded_text.strip():
+        if looks_readable(decoded_text):
             return [{
                 "encoding": "Hex",
                 "decoded_text": decoded_text
@@ -97,37 +112,66 @@ def decode_hex(encoded_text):
 
         return []
 
-    except Exception as error:
-        return [{
-            "encoding": "Error",
-            "decoded_text": f"Error decoding Hex: {error}"
-        }]
+    except Exception:
+        return []
 
-def decode_input(encoded_text):
+
+def decode_once(encoded_text):
     decoded_results = []
 
-    base64_results = decode_base64(encoded_text)
+    decoded_results.extend(decode_base64(encoded_text))
+    decoded_results.extend(decode_url(encoded_text))
+    decoded_results.extend(decode_hex(encoded_text))
 
-    for result in base64_results:
-        if result["encoding"] != "Error":
-            decoded_results.append(result)
+    return decoded_results
 
-    url_results = decode_url(encoded_text)
 
-    for result in url_results:
-        if result["encoding"] != "Error":
-            decoded_results.append(result)
+def decode_input(encoded_text, max_depth=3):
+    all_results = []
+    seen_values = set()
 
-    hex_results = decode_hex(encoded_text)
+    current_items = [{
+        "decoded_text": encoded_text,
+        "source_encoding": "Original",
+        "decode_level": 0
+    }]
 
-    for result in hex_results:
-        if result["encoding"] != "Error":
-            decoded_results.append(result)
+    for level in range(1, max_depth + 1):
+        next_items = []
 
-    if not decoded_results:
-        decoded_results.append({
+        for item in current_items:
+            decoded_text = item["decoded_text"]
+            decoded_results = decode_once(decoded_text)
+
+            for result in decoded_results:
+                unique_key = f"{result['encoding']}:{result['decoded_text']}"
+
+                if unique_key in seen_values:
+                    continue
+
+                seen_values.add(unique_key)
+
+                result["decode_level"] = level
+
+                if item["source_encoding"] != "Original":
+                    result["source_encoding"] = item["source_encoding"]
+                elif item["decode_level"] > 0:
+                    result["source_encoding"] = item.get("encoding", "Unknown")
+
+                all_results.append(result)
+                next_items.append({
+                    "decoded_text": result["decoded_text"],
+                    "source_encoding": result["encoding"],
+                    "decode_level": level
+                })
+
+        current_items = next_items
+
+    if not all_results:
+        all_results.append({
             "encoding": "Unknown",
+            "decode_level": 0,
             "decoded_text": "Unable to decode input as Base64, PowerShell UTF-16LE, URL encoding, or Hex."
         })
 
-    return decoded_results
+    return all_results

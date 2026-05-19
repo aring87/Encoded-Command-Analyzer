@@ -89,7 +89,7 @@ def analyze_decoded_result(result):
     found_keywords = check_suspicious_keywords(decoded_text)
     risk_level, score, reasons = calculate_risk_score(found_keywords)
 
-    return {
+    analysis = {
         "timestamp": datetime.now().isoformat(timespec="seconds"),
         "encoding": result["encoding"],
         "decoded_text": decoded_text,
@@ -98,3 +98,11 @@ def analyze_decoded_result(result):
         "risk_score": score,
         "reasons": reasons
     }
+
+    if "decode_level" in result:
+        analysis["decode_level"] = result["decode_level"]
+
+    if "source_encoding" in result:
+        analysis["source_encoding"] = result["source_encoding"]
+
+    return analysis
