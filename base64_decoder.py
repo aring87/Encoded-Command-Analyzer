@@ -157,6 +157,79 @@ def analyze_batch_file(file_path):
         print(f"Error reading file: {error}")
         return []
 
+def print_detection_coverage_summary(analysis_results):
+    mitre_techniques = {}
+    detection_rules = {}
+    detection_templates = {}
+
+    for result in analysis_results:
+        for technique in result.get("mitre_attack", []):
+            technique_id = technique.get("technique_id", "")
+            technique_name = technique.get("technique_name", "")
+            tactic = technique.get("tactic", "")
+
+            if technique_id:
+                mitre_techniques[technique_id] = {
+                    "technique_name": technique_name,
+                    "tactic": tactic
+                }
+
+        for rule in result.get("detection_rules", []):
+            rule_name = rule.get("rule_name", "")
+            severity = rule.get("severity", "")
+
+            if rule_name:
+                detection_rules[rule_name] = severity
+
+        for template in result.get("detection_templates", []):
+            template_name = template.get("template_name", "")
+            template_type = template.get("template_type", "")
+            severity = template.get("severity", "")
+
+            if template_name:
+                detection_templates[template_name] = {
+                    "template_type": template_type,
+                    "severity": severity
+                }
+
+    print("====================================")
+    print("Detection Coverage Summary")
+    print("====================================")
+
+    print("MITRE Techniques Covered:")
+    print("------------------------------------")
+
+    if mitre_techniques:
+        for technique_id, details in mitre_techniques.items():
+            print(
+                f"- {technique_id} - {details.get('technique_name')} "
+                f"({details.get('tactic')})"
+            )
+    else:
+        print("No MITRE techniques identified.")
+
+    print("\nDetection Rule Ideas:")
+    print("------------------------------------")
+
+    if detection_rules:
+        for rule_name, severity in detection_rules.items():
+            print(f"- {rule_name} ({severity})")
+    else:
+        print("No detection rule ideas identified.")
+
+    print("\nDetection Templates:")
+    print("------------------------------------")
+
+    if detection_templates:
+        for template_name, details in detection_templates.items():
+            print(
+                f"- {details.get('template_type')}: {template_name} "
+                f"({details.get('severity')})"
+            )
+    else:
+        print("No detection templates identified.")
+
+    print("====================================")
 
 def print_summary(analysis_results):
     if not analysis_results:
@@ -320,6 +393,7 @@ def main():
         print_analysis_result(analysis)
 
     print_summary(analysis_results)
+    print_detection_coverage_summary(analysis_results)
 
     if args.export:
         export_results(analysis_results)

@@ -8,11 +8,31 @@
 
 ---
 
+## Detection Coverage Summary
+
+### MITRE Techniques Covered
+
+- T1059.001 - PowerShell (Execution)
+- T1027 - Obfuscated Files or Information (Defense Evasion)
+
+### Detection Rule Ideas
+
+- Suspicious PowerShell EncodedCommand Execution (High)
+- PowerShell Invoke-Expression Usage (Medium)
+
+### Detection Templates
+
+- Sigma: Suspicious PowerShell EncodedCommand (High)
+- Microsoft Sentinel KQL: PowerShell EncodedCommand Execution (High)
+- Microsoft Sentinel KQL: PowerShell Invoke-Expression Usage (Medium)
+
+---
+
 ## Finding 1
 
 ### Metadata
 
-- Timestamp: 2026-05-19T19:03:33
+- Timestamp: 2026-05-19T19:29:30
 - Encoding: UTF-8
 - Decode Level: 1
 - Source Encoding: 
@@ -138,7 +158,7 @@ DeviceProcessEvents
 
 ### Metadata
 
-- Timestamp: 2026-05-19T19:03:33
+- Timestamp: 2026-05-19T19:29:30
 - Encoding: URL
 - Decode Level: 2
 - Source Encoding: UTF-8

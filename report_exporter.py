@@ -2,6 +2,46 @@ import csv
 import json
 import os
 
+def build_detection_coverage_summary(analysis_results):
+    mitre_techniques = {}
+    detection_rules = {}
+    detection_templates = {}
+
+    for result in analysis_results:
+        for technique in result.get("mitre_attack", []):
+            technique_id = technique.get("technique_id", "")
+            technique_name = technique.get("technique_name", "")
+            tactic = technique.get("tactic", "")
+
+            if technique_id:
+                mitre_techniques[technique_id] = {
+                    "technique_name": technique_name,
+                    "tactic": tactic
+                }
+
+        for rule in result.get("detection_rules", []):
+            rule_name = rule.get("rule_name", "")
+            severity = rule.get("severity", "")
+
+            if rule_name:
+                detection_rules[rule_name] = severity
+
+        for template in result.get("detection_templates", []):
+            template_name = template.get("template_name", "")
+            template_type = template.get("template_type", "")
+            severity = template.get("severity", "")
+
+            if template_name:
+                detection_templates[template_name] = {
+                    "template_type": template_type,
+                    "severity": severity
+                }
+
+    return {
+        "mitre_techniques": mitre_techniques,
+        "detection_rules": detection_rules,
+        "detection_templates": detection_templates
+    }
 
 def export_to_json(analysis_results):
     os.makedirs("output", exist_ok=True)
@@ -56,22 +96,22 @@ def export_to_csv(analysis_results):
                     f"({technique.get('tactic')})"
                 )
 
-        detection_rule_values = []
+            detection_rule_values = []
 
-        for rule in result.get("detection_rules", []):
-            detection_rule_values.append(
-                f"{rule.get('rule_name')} ({rule.get('severity')})"
-            )
-            
+            for rule in result.get("detection_rules", []):
+                detection_rule_values.append(
+                    f"{rule.get('rule_name')} ({rule.get('severity')})"
+                )
+
             case_context = result.get("case_context", {})
-            
+
             detection_template_values = []
 
             for template in result.get("detection_templates", []):
                 detection_template_values.append(
                     f"{template.get('template_name')} ({template.get('template_type')} - {template.get('severity')})"
                 )
-            
+
             writer.writerow({
                 "timestamp": result.get("timestamp", ""),
                 "case_id": case_context.get("case_id", ""),
@@ -138,6 +178,39 @@ def export_to_markdown(analysis_results):
             file.write(f"- Analyst Notes: {case_context.get('analyst_notes', '')}\n\n")
 
         file.write("---\n\n")
+        
+        coverage_summary = build_detection_coverage_summary(analysis_results)
+
+        file.write("## Detection Coverage Summary\n\n")
+
+        file.write("### MITRE Techniques Covered\n\n")
+        if coverage_summary["mitre_techniques"]:
+            for technique_id, details in coverage_summary["mitre_techniques"].items():
+                file.write(
+                    f"- {technique_id} - {details.get('technique_name')} "
+                    f"({details.get('tactic')})\n"
+                )
+        else:
+            file.write("- No MITRE techniques identified.\n")
+
+        file.write("\n### Detection Rule Ideas\n\n")
+        if coverage_summary["detection_rules"]:
+            for rule_name, severity in coverage_summary["detection_rules"].items():
+                file.write(f"- {rule_name} ({severity})\n")
+        else:
+            file.write("- No detection rule ideas identified.\n")
+
+        file.write("\n### Detection Templates\n\n")
+        if coverage_summary["detection_templates"]:
+            for template_name, details in coverage_summary["detection_templates"].items():
+                file.write(
+                    f"- {details.get('template_type')}: {template_name} "
+                    f"({details.get('severity')})\n"
+                )
+        else:
+            file.write("- No detection templates identified.\n")
+
+        file.write("\n---\n\n")
 
         for index, result in enumerate(analysis_results, start=1):
             file.write(f"## Finding {index}\n\n")
@@ -417,6 +490,51 @@ def export_to_html(analysis_results):
             file.write(f"<li><strong>Analyst Notes:</strong> {escape_html(case_context.get('analyst_notes', ''))}</li>\n")
             file.write("</ul>\n")
             file.write("</div>\n")
+        
+        coverage_summary = build_detection_coverage_summary(analysis_results)
+
+        file.write('<div class="summary">\n')
+        file.write("<h2>Detection Coverage Summary</h2>\n")
+
+        file.write("<h3>MITRE Techniques Covered</h3>\n")
+        if coverage_summary["mitre_techniques"]:
+            file.write("<ul>\n")
+            for technique_id, details in coverage_summary["mitre_techniques"].items():
+                file.write(
+                    f"<li><strong>{escape_html(technique_id)} - "
+                    f"{escape_html(details.get('technique_name'))}</strong> "
+                    f"({escape_html(details.get('tactic'))})</li>\n"
+                )
+            file.write("</ul>\n")
+        else:
+            file.write('<p class="muted">No MITRE techniques identified.</p>\n')
+
+        file.write("<h3>Detection Rule Ideas</h3>\n")
+        if coverage_summary["detection_rules"]:
+            file.write("<ul>\n")
+            for rule_name, severity in coverage_summary["detection_rules"].items():
+                file.write(
+                    f"<li>{escape_html(rule_name)} "
+                    f"({escape_html(severity)})</li>\n"
+                )
+            file.write("</ul>\n")
+        else:
+            file.write('<p class="muted">No detection rule ideas identified.</p>\n')
+
+        file.write("<h3>Detection Templates</h3>\n")
+        if coverage_summary["detection_templates"]:
+            file.write("<ul>\n")
+            for template_name, details in coverage_summary["detection_templates"].items():
+                file.write(
+                    f"<li>{escape_html(details.get('template_type'))}: "
+                    f"{escape_html(template_name)} "
+                    f"({escape_html(details.get('severity'))})</li>\n"
+                )
+            file.write("</ul>\n")
+        else:
+            file.write('<p class="muted">No detection templates identified.</p>\n')
+
+        file.write("</div>\n")
 
         for index, result in enumerate(analysis_results, start=1):
             risk_level = result.get("risk_level", "None")
