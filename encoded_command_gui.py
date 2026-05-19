@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox, scrolledtext
 
-from decoder_engine import decode_base64
+from decoder_engine import decode_input
 from detection_engine import analyze_decoded_result
 from report_exporter import export_to_csv, export_to_json
 
@@ -70,7 +70,7 @@ class EncodedCommandAnalyzerGUI:
             messagebox.showwarning("Missing Input", "Please paste an encoded string first.")
             return
 
-        decoded_results = decode_base64(encoded_text)
+        decoded_results = decode_input(encoded_text)
 
         self.analysis_results = []
         self.output_box.delete("1.0", tk.END)
