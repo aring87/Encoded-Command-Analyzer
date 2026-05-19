@@ -4,10 +4,40 @@ import base64
 def decode_base64(encoded_text):
     try:
         decoded_bytes = base64.b64decode(encoded_text)
-        decoded_text = decoded_bytes.decode("utf-8", errors="ignore")
-        return decoded_text
+
+        decoded_results = []
+
+        try:
+            utf8_text = decoded_bytes.decode("utf-8")
+            decoded_results.append({
+                "encoding": "UTF-8",
+                "decoded_text": utf8_text
+            })
+        except UnicodeDecodeError:
+            pass
+
+        try:
+            utf16_text = decoded_bytes.decode("utf-16le")
+            decoded_results.append({
+                "encoding": "UTF-16LE",
+                "decoded_text": utf16_text
+            })
+        except UnicodeDecodeError:
+            pass
+
+        if not decoded_results:
+            decoded_results.append({
+                "encoding": "Unknown",
+                "decoded_text": decoded_bytes.decode("utf-8", errors="ignore")
+            })
+
+        return decoded_results
+
     except Exception as error:
-        return f"Error decoding Base64: {error}"
+        return [{
+            "encoding": "Error",
+            "decoded_text": f"Error decoding Base64: {error}"
+        }]
 
 
 def check_suspicious_keywords(decoded_text):
@@ -25,7 +55,10 @@ def check_suspicious_keywords(decoded_text):
         "http",
         "https",
         "bypass",
-        "hidden"
+        "hidden",
+        "nop",
+        "wscript",
+        "cscript"
     ]
 
     found_keywords = []
@@ -55,7 +88,10 @@ def calculate_risk_score(found_keywords):
         "-encodedcommand",
         "bypass",
         "hidden",
-        "start-process"
+        "start-process",
+        "nop",
+        "wscript",
+        "cscript"
     ]
 
     low_risk_keywords = [
@@ -87,17 +123,13 @@ def calculate_risk_score(found_keywords):
     return risk_level, score, reasons
 
 
-def main():
-    print("====================================")
-    print(" Encoded Command Analyzer - Version 3")
-    print("====================================")
-
-    encoded_text = input("Paste Base64 string: ")
-
-    decoded_text = decode_base64(encoded_text)
+def print_analysis_result(result):
+    encoding = result["encoding"]
+    decoded_text = result["decoded_text"]
 
     print("\nDecoded Output:")
     print("------------------------------------")
+    print(f"Detected Encoding: {encoding}")
     print(decoded_text)
 
     found_keywords = check_suspicious_keywords(decoded_text)
@@ -123,6 +155,20 @@ def main():
         print("\nReasons:")
         for reason in reasons:
             print(f"- {reason}")
+
+
+def main():
+    print("====================================")
+    print(" Encoded Command Analyzer - Version 4")
+    print("====================================")
+
+    encoded_text = input("Paste Base64 string: ")
+
+    decoded_results = decode_base64(encoded_text)
+
+    for result in decoded_results:
+        print_analysis_result(result)
+        print("\n" + "=" * 50)
 
 
 if __name__ == "__main__":
