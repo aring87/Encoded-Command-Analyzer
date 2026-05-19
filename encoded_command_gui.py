@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import messagebox, scrolledtext
+from tkinter import filedialog, messagebox, scrolledtext
 
 from decoder_engine import decode_input
 from detection_engine import analyze_decoded_result
@@ -70,6 +70,17 @@ class EncodedCommandAnalyzerGUI:
         )
         analyze_button.grid(row=0, column=0, padx=6)
 
+        batch_button = tk.Button(
+            button_frame,
+            text="Load Batch File",
+            width=18,
+            bg="#7c3aed",
+            fg="white",
+            font=("Arial", 10, "bold"),
+            command=self.load_batch_file
+        )
+        batch_button.grid(row=0, column=1, padx=6)
+
         clear_button = tk.Button(
             button_frame,
             text="Clear",
@@ -79,7 +90,7 @@ class EncodedCommandAnalyzerGUI:
             font=("Arial", 10, "bold"),
             command=self.clear_all
         )
-        clear_button.grid(row=0, column=1, padx=6)
+        clear_button.grid(row=0, column=2, padx=6)
 
         export_button = tk.Button(
             button_frame,
@@ -90,7 +101,7 @@ class EncodedCommandAnalyzerGUI:
             font=("Arial", 10, "bold"),
             command=self.export_results
         )
-        export_button.grid(row=0, column=2, padx=6)
+        export_button.grid(row=0, column=3, padx=6)
 
         self.risk_banner = tk.Label(
             self.root,
@@ -140,12 +151,88 @@ class EncodedCommandAnalyzerGUI:
 
         for result in decoded_results:
             analysis = analyze_decoded_result(result)
+            analysis["original_input"] = encoded_text
+
             self.analysis_results.append(analysis)
             self.display_analysis(analysis)
 
-            if analysis["risk_score"] > highest_score:
-                highest_score = analysis["risk_score"]
-                highest_risk = analysis["risk_level"]
+            if analysis.get("risk_score", 0) > highest_score:
+                highest_score = analysis.get("risk_score", 0)
+                highest_risk = analysis.get("risk_level", "None")
+
+        self.update_risk_banner(highest_risk, highest_score)
+
+    def load_batch_file(self):
+        file_path = filedialog.askopenfilename(
+            title="Select Batch File",
+            filetypes=[
+                ("Text Files", "*.txt"),
+                ("CSV Files", "*.csv"),
+                ("All Files", "*.*")
+            ]
+        )
+
+        if not file_path:
+            return
+
+        try:
+            with open(file_path, "r", encoding="utf-8") as file:
+                lines = file.readlines()
+
+            encoded_values = []
+
+            for line in lines:
+                cleaned_line = line.strip()
+
+                if cleaned_line:
+                    encoded_values.append(cleaned_line)
+
+            if not encoded_values:
+                messagebox.showwarning(
+                    "Empty File",
+                    "The selected file does not contain any encoded values."
+                )
+                return
+
+            self.analyze_batch(encoded_values, file_path)
+
+        except Exception as error:
+            messagebox.showerror(
+                "File Error",
+                f"Could not read the selected file:\n\n{error}"
+            )
+
+    def analyze_batch(self, encoded_values, file_path):
+        self.analysis_results = []
+        self.output_box.delete("1.0", tk.END)
+
+        highest_risk = "None"
+        highest_score = 0
+
+        self.output_box.insert(tk.END, "====================================\n")
+        self.output_box.insert(tk.END, "Batch File Analysis\n")
+        self.output_box.insert(tk.END, f"Source File: {file_path}\n")
+        self.output_box.insert(tk.END, f"Total Inputs: {len(encoded_values)}\n")
+        self.output_box.insert(tk.END, "====================================\n\n")
+
+        for index, encoded_text in enumerate(encoded_values, start=1):
+            self.output_box.insert(tk.END, f"\n########## Batch Item {index} ##########\n")
+            self.output_box.insert(tk.END, f"Original Input:\n{encoded_text}\n\n")
+
+            decoded_results = decode_input(encoded_text)
+
+            for result in decoded_results:
+                analysis = analyze_decoded_result(result)
+                analysis["batch_item"] = index
+                analysis["original_input"] = encoded_text
+                analysis["source_file"] = file_path
+
+                self.analysis_results.append(analysis)
+                self.display_analysis(analysis)
+
+                if analysis.get("risk_score", 0) > highest_score:
+                    highest_score = analysis.get("risk_score", 0)
+                    highest_risk = analysis.get("risk_level", "None")
 
         self.update_risk_banner(highest_risk, highest_score)
 
@@ -166,57 +253,74 @@ class EncodedCommandAnalyzerGUI:
 
     def display_analysis(self, analysis):
         self.output_box.insert(tk.END, "====================================\n")
-        self.output_box.insert(tk.END, f"Timestamp: {analysis['timestamp']}\n")
-        self.output_box.insert(tk.END, f"Detected Encoding: {analysis['encoding']}\n")
+        self.output_box.insert(tk.END, f"Timestamp: {analysis.get('timestamp', '')}\n")
+        self.output_box.insert(tk.END, f"Detected Encoding: {analysis.get('encoding', '')}\n")
 
         if "decode_level" in analysis:
-            self.output_box.insert(tk.END, f"Decode Level: {analysis['decode_level']}\n")
+            self.output_box.insert(tk.END, f"Decode Level: {analysis.get('decode_level')}\n")
 
         if "source_encoding" in analysis:
-            self.output_box.insert(tk.END, f"Source Encoding: {analysis['source_encoding']}\n")
+            self.output_box.insert(tk.END, f"Source Encoding: {analysis.get('source_encoding')}\n")
 
         self.output_box.insert(tk.END, "\nDecoded Output:\n")
         self.output_box.insert(tk.END, "------------------------------------\n")
-        self.output_box.insert(tk.END, f"{analysis['decoded_text']}\n\n")
+        self.output_box.insert(tk.END, f"{analysis.get('decoded_text', '')}\n\n")
 
         self.output_box.insert(tk.END, "Suspicious Keyword Check:\n")
         self.output_box.insert(tk.END, "------------------------------------\n")
 
-        if analysis["suspicious_keywords"]:
-            for keyword in analysis["suspicious_keywords"]:
+        suspicious_keywords = analysis.get("suspicious_keywords", [])
+
+        if suspicious_keywords:
+            for keyword in suspicious_keywords:
                 self.output_box.insert(tk.END, f"- {keyword}\n")
         else:
             self.output_box.insert(tk.END, "No suspicious keywords found.\n")
 
         self.output_box.insert(tk.END, "\nRisk Score:\n")
         self.output_box.insert(tk.END, "------------------------------------\n")
-        self.output_box.insert(tk.END, f"Risk Level: {analysis['risk_level']}\n")
-        self.output_box.insert(tk.END, f"Score: {analysis['risk_score']}\n")
+        self.output_box.insert(tk.END, f"Risk Level: {analysis.get('risk_level', 'None')}\n")
+        self.output_box.insert(tk.END, f"Score: {analysis.get('risk_score', 0)}\n")
 
-        if analysis["reasons"]:
+        reasons = analysis.get("reasons", [])
+
+        if reasons:
             self.output_box.insert(tk.END, "\nReasons:\n")
-            for reason in analysis["reasons"]:
+
+            for reason in reasons:
                 self.output_box.insert(tk.END, f"- {reason}\n")
 
         self.output_box.insert(tk.END, "\n")
 
     def export_results(self):
         if not self.analysis_results:
-            messagebox.showwarning("No Results", "Run an analysis before exporting results.")
+            messagebox.showwarning(
+                "No Results",
+                "Run an analysis before exporting results."
+            )
             return
 
-        json_path = export_to_json(self.analysis_results)
-        csv_path = export_to_csv(self.analysis_results)
+        try:
+            json_path = export_to_json(self.analysis_results)
+            csv_path = export_to_csv(self.analysis_results)
 
-        messagebox.showinfo(
-            "Export Complete",
-            f"Results exported successfully:\n\n{json_path}\n{csv_path}"
-        )
+            messagebox.showinfo(
+                "Export Complete",
+                f"Results exported successfully:\n\n{json_path}\n{csv_path}"
+            )
+
+        except Exception as error:
+            messagebox.showerror(
+                "Export Error",
+                f"Could not export results:\n\n{error}"
+            )
 
     def clear_all(self):
         self.input_box.delete("1.0", tk.END)
         self.output_box.delete("1.0", tk.END)
+
         self.analysis_results = []
+
         self.risk_banner.config(
             text="Risk Level: Not Analyzed",
             bg="#334155"

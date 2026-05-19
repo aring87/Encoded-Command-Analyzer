@@ -22,6 +22,9 @@ def export_to_csv(analysis_results):
     with open(file_path, "w", newline="", encoding="utf-8") as file:
         fieldnames = [
             "timestamp",
+            "batch_item",
+            "source_file",
+            "original_input",
             "encoding",
             "decode_level",
             "source_encoding",
@@ -38,6 +41,9 @@ def export_to_csv(analysis_results):
         for result in analysis_results:
             writer.writerow({
                 "timestamp": result.get("timestamp", ""),
+                "batch_item": result.get("batch_item", ""),
+                "source_file": result.get("source_file", ""),
+                "original_input": result.get("original_input", ""),
                 "encoding": result.get("encoding", ""),
                 "decode_level": result.get("decode_level", ""),
                 "source_encoding": result.get("source_encoding", ""),
