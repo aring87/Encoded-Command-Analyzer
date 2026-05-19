@@ -7,6 +7,7 @@
 ![Interface](https://img.shields.io/badge/Interface-CLI%20%7C%20GUI-purple)
 ![MITRE ATT&CK](https://img.shields.io/badge/MITRE-ATT%26CK-orange)
 ![Exports](https://img.shields.io/badge/Exports-JSON%20%7C%20CSV%20%7C%20Markdown-yellow)
+![Decoding](https://img.shields.io/badge/Decoding-Base64%20%7C%20URL%20%7C%20Hex%20%7C%20XOR-blueviolet)
 ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 ## Overview
@@ -15,13 +16,13 @@
 
 The tool is designed to help security analysts and detection engineers triage suspicious commands, identify signs of PowerShell abuse, detect common obfuscation patterns, map findings to MITRE ATT&CK techniques, and produce analyst-friendly output for investigations.
 
-This project started as a simple Base64 decoder and has expanded into a lightweight encoded command analysis tool with CLI support, GUI support, batch file analysis, chained decoding, compressed Base64 support, suspicious keyword detection, risk scoring, MITRE ATT&CK mapping, and analyst-ready exports.
+This project started as a simple Base64 decoder and has expanded into a lightweight encoded command analysis tool with CLI support, GUI support, batch file analysis, chained decoding, compressed Base64 support, XOR Hex decoding, suspicious keyword detection, risk scoring, MITRE ATT&CK mapping, and analyst-ready exports.
 
 ---
 
 ## Current Version
 
-**Version 16**
+**Version 17**
 
 ### Current Capabilities
 
@@ -33,6 +34,8 @@ This project started as a simple Base64 decoder and has expanded into a lightwei
 - Decode Gzip-compressed Base64
 - Decode Deflate-compressed Base64
 - Decode Raw Deflate Base64
+- Decode single-byte XOR Hex strings
+- Rank XOR Hex candidates and return the highest-confidence result
 - Analyze a single encoded string
 - Analyze a batch file containing multiple encoded strings
 - Identify suspicious command-line keywords
@@ -61,6 +64,7 @@ Encoded and obfuscated commands are commonly seen during security investigations
 - SIEM and EDR alert investigation
 - Compressed payload delivery
 - Chained encoding and obfuscation
+- Lightweight XOR-obfuscated strings
 
 This tool provides a simple way to decode suspicious content and quickly review indicators that may be useful during triage.
 
@@ -78,7 +82,7 @@ This tool provides a simple way to decode suspicious content and quickly review 
 | Gzip Base64 | Supported |
 | Deflate Base64 | Supported |
 | Raw Deflate Base64 | Supported |
-| XOR Obfuscation | Planned |
+| XOR Hex | Supported |
 
 ---
 
@@ -157,6 +161,38 @@ This may be scored as **High** because it contains PowerShell execution, encoded
 
 ---
 
+## XOR Hex Decoding
+
+Version 17 adds single-byte XOR Hex decoding support.
+
+The tool can brute-force possible XOR keys, score the decoded candidates, and return the highest-confidence result.
+
+Example XOR Hex input:
+
+```text
+534c544651504b464f4f0d465b46030e464d40036a667b
+```
+
+Expected decoded output:
+
+```text
+powershell.exe -enc IEX
+```
+
+Example result:
+
+```text
+Detected Encoding: XOR Hex Key 0x23
+Risk Level: High
+MITRE ATT&CK Mapping:
+- T1059.001 - PowerShell
+- T1027 - Obfuscated Files or Information
+```
+
+XOR Hex detection is confidence-based and intended to help analysts identify suspicious strings during triage.
+
+---
+
 ## GUI Interface
 
 The project includes a Tkinter-based GUI that allows analysts to:
@@ -190,6 +226,12 @@ The project supports command-line arguments for automation-friendly usage.
 
 ```powershell
 python base64_decoder.py --input "SGVsbG8gd29ybGQ="
+```
+
+### Analyze XOR Hex Input
+
+```powershell
+python base64_decoder.py --input "534c544651504b464f4f0d465b46030e464d40036a667b"
 ```
 
 ### Analyze a Batch File
@@ -239,7 +281,7 @@ encoded-command-analyzer/
 |---|---|
 | `base64_decoder.py` | CLI entry point and command-line argument handler |
 | `encoded_command_gui.py` | Tkinter GUI entry point |
-| `decoder_engine.py` | Decoding logic for Base64, UTF-16LE, URL, Hex, chained decoding, and compressed Base64 |
+| `decoder_engine.py` | Decoding logic for Base64, UTF-16LE, URL, Hex, chained decoding, compressed Base64, and XOR Hex |
 | `detection_engine.py` | Suspicious keyword detection, risk scoring, analysis logic, and MITRE ATT&CK mapping |
 | `report_exporter.py` | JSON, CSV, and Markdown export functions |
 | `samples/` | Sample input files for testing |
@@ -458,6 +500,32 @@ Risk Level: High
 
 ---
 
+## Example: XOR Hex Input
+
+Input:
+
+```text
+534c544651504b464f4f0d465b46030e464d40036a667b
+```
+
+Decoded output:
+
+```text
+powershell.exe -enc IEX
+```
+
+Example result:
+
+```text
+Detected Encoding: XOR Hex Key 0x23
+Risk Level: High
+MITRE ATT&CK Mapping:
+- T1059.001 - PowerShell
+- T1027 - Obfuscated Files or Information
+```
+
+---
+
 ## Example: Batch File Analysis
 
 Create a text file with one encoded value per line:
@@ -468,6 +536,7 @@ cABvAHcAZQByAHMAaABlAGwAbAAuAGUAeABlACAALQBlAG4AYwAgAEkARQBYAA==
 powershell%2Eexe%20-enc%20IEX
 706f7765727368656c6c2e657865202d656e6320494558
 cG93ZXJzaGVsbCUyRWV4ZSUyMC1lbmMlMjBJRVg=
+534c544651504b464f4f0d465b46030e464d40036a667b
 ```
 
 Run:
@@ -514,9 +583,7 @@ Exported fields include:
 
 ## Analyst Triage Report
 
-Version 15 added Markdown triage report generation.
-
-The generated report includes:
+The generated Markdown triage report includes:
 
 - Summary
 - Total results
@@ -590,12 +657,12 @@ It is not intended to execute decoded content.
 
 Planned upgrades:
 
-- Version 17: Add XOR decode helper
 - Version 18: Add unit tests
 - Version 19: Package as an executable
 - Version 20: Add detection rule mapping
 - Version 21: Add configurable keyword rules
 - Version 22: Add HTML report export
+- Version 23: Add enrichment fields for analyst notes
 
 ---
 
