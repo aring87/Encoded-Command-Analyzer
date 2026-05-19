@@ -1,82 +1,6 @@
 [
     {
-        "timestamp": "2026-05-19T13:36:08",
-        "encoding": "UTF-8",
-        "decoded_text": "Hello world",
-        "suspicious_keywords": [],
-        "risk_level": "None",
-        "risk_score": 0,
-        "reasons": [],
-        "decode_level": 1,
-        "batch_item": 1,
-        "original_input": "SGVsbG8gd29ybGQ=",
-        "source_file": "samples\\sample_batch.txt"
-    },
-    {
-        "timestamp": "2026-05-19T13:36:08",
-        "encoding": "UTF-16LE",
-        "decoded_text": "powershell.exe -enc IEX",
-        "suspicious_keywords": [
-            "powershell",
-            "-enc",
-            "iex"
-        ],
-        "risk_level": "High",
-        "risk_score": 7,
-        "reasons": [
-            "powershell may indicate suspicious command-line or PowerShell behavior.",
-            "-enc may indicate suspicious command-line or PowerShell behavior.",
-            "iex is commonly used in malicious or obfuscated script execution."
-        ],
-        "decode_level": 1,
-        "batch_item": 2,
-        "original_input": "cABvAHcAZQByAHMAaABlAGwAbAAuAGUAeABlACAALQBlAG4AYwAgAEkARQBYAA==",
-        "source_file": "samples\\sample_batch.txt"
-    },
-    {
-        "timestamp": "2026-05-19T13:36:08",
-        "encoding": "URL",
-        "decoded_text": "powershell.exe -enc IEX",
-        "suspicious_keywords": [
-            "powershell",
-            "-enc",
-            "iex"
-        ],
-        "risk_level": "High",
-        "risk_score": 7,
-        "reasons": [
-            "powershell may indicate suspicious command-line or PowerShell behavior.",
-            "-enc may indicate suspicious command-line or PowerShell behavior.",
-            "iex is commonly used in malicious or obfuscated script execution."
-        ],
-        "decode_level": 1,
-        "batch_item": 3,
-        "original_input": "powershell%2Eexe%20-enc%20IEX",
-        "source_file": "samples\\sample_batch.txt"
-    },
-    {
-        "timestamp": "2026-05-19T13:36:08",
-        "encoding": "Hex",
-        "decoded_text": "powershell.exe -enc IEX",
-        "suspicious_keywords": [
-            "powershell",
-            "-enc",
-            "iex"
-        ],
-        "risk_level": "High",
-        "risk_score": 7,
-        "reasons": [
-            "powershell may indicate suspicious command-line or PowerShell behavior.",
-            "-enc may indicate suspicious command-line or PowerShell behavior.",
-            "iex is commonly used in malicious or obfuscated script execution."
-        ],
-        "decode_level": 1,
-        "batch_item": 4,
-        "original_input": "706f7765727368656c6c2e657865202d656e6320494558",
-        "source_file": "samples\\sample_batch.txt"
-    },
-    {
-        "timestamp": "2026-05-19T13:36:08",
+        "timestamp": "2026-05-19T13:53:20",
         "encoding": "UTF-8",
         "decoded_text": "powershell%2Eexe%20-enc%20IEX",
         "suspicious_keywords": [
@@ -91,13 +15,25 @@
             "-enc may indicate suspicious command-line or PowerShell behavior.",
             "iex is commonly used in malicious or obfuscated script execution."
         ],
+        "mitre_attack": [
+            {
+                "technique_id": "T1059.001",
+                "technique_name": "PowerShell",
+                "tactic": "Execution",
+                "reason": "PowerShell is commonly used for command and script execution."
+            },
+            {
+                "technique_id": "T1027",
+                "technique_name": "Obfuscated Files or Information",
+                "tactic": "Defense Evasion",
+                "reason": "Encoded command usage may indicate command obfuscation."
+            }
+        ],
         "decode_level": 1,
-        "batch_item": 5,
-        "original_input": "cG93ZXJzaGVsbCUyRWV4ZSUyMC1lbmMlMjBJRVg=",
-        "source_file": "samples\\sample_batch.txt"
+        "original_input": "cG93ZXJzaGVsbCUyRWV4ZSUyMC1lbmMlMjBJRVg="
     },
     {
-        "timestamp": "2026-05-19T13:36:08",
+        "timestamp": "2026-05-19T13:53:20",
         "encoding": "URL",
         "decoded_text": "powershell.exe -enc IEX",
         "suspicious_keywords": [
@@ -112,10 +48,22 @@
             "-enc may indicate suspicious command-line or PowerShell behavior.",
             "iex is commonly used in malicious or obfuscated script execution."
         ],
+        "mitre_attack": [
+            {
+                "technique_id": "T1059.001",
+                "technique_name": "PowerShell",
+                "tactic": "Execution",
+                "reason": "PowerShell is commonly used for command and script execution."
+            },
+            {
+                "technique_id": "T1027",
+                "technique_name": "Obfuscated Files or Information",
+                "tactic": "Defense Evasion",
+                "reason": "Encoded command usage may indicate command obfuscation."
+            }
+        ],
         "decode_level": 2,
         "source_encoding": "UTF-8",
-        "batch_item": 5,
-        "original_input": "cG93ZXJzaGVsbCUyRWV4ZSUyMC1lbmMlMjBJRVg=",
-        "source_file": "samples\\sample_batch.txt"
+        "original_input": "cG93ZXJzaGVsbCUyRWV4ZSUyMC1lbmMlMjBJRVg="
     }
 ]
