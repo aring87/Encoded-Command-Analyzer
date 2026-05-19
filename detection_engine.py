@@ -381,12 +381,100 @@ def map_detection_rules(found_keywords):
 
     return detection_rules
 
+def map_detection_templates(found_keywords):
+    templates = []
+
+    keyword_set = set(found_keywords)
+
+    if "powershell" in keyword_set and "-enc" in keyword_set:
+        templates.append({
+            "template_name": "Suspicious PowerShell EncodedCommand",
+            "template_type": "Sigma",
+            "severity": "High",
+            "description": "Detects PowerShell execution using encoded command arguments.",
+            "query": """title: Suspicious PowerShell EncodedCommand
+id: 00000000-0000-0000-0000-000000000024
+status: experimental
+description: Detects PowerShell execution using encoded command arguments.
+author: Encoded Command Analyzer
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection:
+    Image|endswith:
+      - '\\powershell.exe'
+      - '\\pwsh.exe'
+    CommandLine|contains:
+      - '-enc'
+      - '-encodedcommand'
+  condition: selection
+falsepositives:
+  - Administrative scripts
+  - Software deployment tools
+level: high
+tags:
+  - attack.execution
+  - attack.t1059.001
+  - attack.defense_evasion
+  - attack.t1027"""
+        })
+
+        templates.append({
+            "template_name": "PowerShell EncodedCommand Execution",
+            "template_type": "Microsoft Sentinel KQL",
+            "severity": "High",
+            "description": "Detects PowerShell process executions containing encoded command arguments.",
+            "query": """DeviceProcessEvents
+| where FileName in~ ("powershell.exe", "pwsh.exe")
+| where ProcessCommandLine has_any ("-enc", "-encodedcommand")
+| project Timestamp, DeviceName, InitiatingProcessAccountName, FileName, ProcessCommandLine, InitiatingProcessFileName, InitiatingProcessCommandLine"""
+        })
+
+    if "iex" in keyword_set or "invoke-expression" in keyword_set:
+        templates.append({
+            "template_name": "PowerShell Invoke-Expression Usage",
+            "template_type": "Microsoft Sentinel KQL",
+            "severity": "Medium",
+            "description": "Detects PowerShell command lines containing IEX or Invoke-Expression.",
+            "query": """DeviceProcessEvents
+| where FileName in~ ("powershell.exe", "pwsh.exe")
+| where ProcessCommandLine has_any ("iex", "invoke-expression")
+| project Timestamp, DeviceName, InitiatingProcessAccountName, FileName, ProcessCommandLine, InitiatingProcessFileName, InitiatingProcessCommandLine"""
+        })
+
+    if "downloadstring" in keyword_set or "webclient" in keyword_set:
+        templates.append({
+            "template_name": "PowerShell Download Cradle",
+            "template_type": "Microsoft Sentinel KQL",
+            "severity": "High",
+            "description": "Detects PowerShell command lines containing common download cradle indicators.",
+            "query": """DeviceProcessEvents
+| where FileName in~ ("powershell.exe", "pwsh.exe")
+| where ProcessCommandLine has_any ("downloadstring", "webclient", "invoke-webrequest", "iwr", "wget", "curl")
+| project Timestamp, DeviceName, InitiatingProcessAccountName, FileName, ProcessCommandLine, InitiatingProcessFileName, InitiatingProcessCommandLine"""
+        })
+
+    if "cmd.exe" in keyword_set:
+        templates.append({
+            "template_name": "Command Shell Execution",
+            "template_type": "Microsoft Sentinel KQL",
+            "severity": "Low",
+            "description": "Detects cmd.exe execution for process-chain investigation.",
+            "query": """DeviceProcessEvents
+| where FileName =~ "cmd.exe"
+| project Timestamp, DeviceName, InitiatingProcessAccountName, FileName, ProcessCommandLine, InitiatingProcessFileName, InitiatingProcessCommandLine"""
+        })
+
+    return templates
+
 def analyze_decoded_result(result):
     decoded_text = result["decoded_text"]
     found_keywords = check_suspicious_keywords(decoded_text)
     risk_level, score, reasons = calculate_risk_score(found_keywords)
     mitre_mappings = map_mitre_attack(found_keywords)
     detection_rules = map_detection_rules(found_keywords)
+    detection_templates = map_detection_templates(found_keywords)
 
     analysis = {
         "timestamp": datetime.now().isoformat(timespec="seconds"),
@@ -397,7 +485,8 @@ def analyze_decoded_result(result):
         "risk_score": score,
         "reasons": reasons,
         "mitre_attack": mitre_mappings,
-        "detection_rules": detection_rules
+        "detection_rules": detection_rules,
+        "detection_templates": detection_templates
     }
 
     if "decode_level" in result:

@@ -85,6 +85,22 @@ def print_analysis_result(analysis):
             print(f"  Description: {rule.get('description')}")
             print(f"  Log Sources: {', '.join(rule.get('log_sources', []))}")
             print(f"  Reason: {rule.get('reason')}")
+            
+        detection_templates = analysis.get("detection_templates", [])
+
+    if detection_templates:
+        print("\nDetection Templates:")
+        print("------------------------------------")
+
+        for template in detection_templates:
+            print(f"- {template.get('template_name')}")
+            print(f"  Type: {template.get('template_type')}")
+            print(f"  Severity: {template.get('severity')}")
+            print(f"  Description: {template.get('description')}")
+            print("  Query:")
+            print("------------------------------------")
+            print(template.get("query", ""))
+            print("------------------------------------")
 
     print()
 

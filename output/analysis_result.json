@@ -1,6 +1,6 @@
 [
     {
-        "timestamp": "2026-05-19T18:37:14",
+        "timestamp": "2026-05-19T18:49:59",
         "encoding": "UTF-8",
         "decoded_text": "powershell%2Eexe%20-enc%20IEX",
         "suspicious_keywords": [
@@ -60,19 +60,34 @@
                 "reason": "IEX is commonly used to execute PowerShell content in memory."
             }
         ],
+        "detection_templates": [
+            {
+                "template_name": "Suspicious PowerShell EncodedCommand",
+                "template_type": "Sigma",
+                "severity": "High",
+                "description": "Detects PowerShell execution using encoded command arguments.",
+                "query": "title: Suspicious PowerShell EncodedCommand\nid: 00000000-0000-0000-0000-000000000024\nstatus: experimental\ndescription: Detects PowerShell execution using encoded command arguments.\nauthor: Encoded Command Analyzer\nlogsource:\n  product: windows\n  category: process_creation\ndetection:\n  selection:\n    Image|endswith:\n      - '\\powershell.exe'\n      - '\\pwsh.exe'\n    CommandLine|contains:\n      - '-enc'\n      - '-encodedcommand'\n  condition: selection\nfalsepositives:\n  - Administrative scripts\n  - Software deployment tools\nlevel: high\ntags:\n  - attack.execution\n  - attack.t1059.001\n  - attack.defense_evasion\n  - attack.t1027"
+            },
+            {
+                "template_name": "PowerShell EncodedCommand Execution",
+                "template_type": "Microsoft Sentinel KQL",
+                "severity": "High",
+                "description": "Detects PowerShell process executions containing encoded command arguments.",
+                "query": "DeviceProcessEvents\n| where FileName in~ (\"powershell.exe\", \"pwsh.exe\")\n| where ProcessCommandLine has_any (\"-enc\", \"-encodedcommand\")\n| project Timestamp, DeviceName, InitiatingProcessAccountName, FileName, ProcessCommandLine, InitiatingProcessFileName, InitiatingProcessCommandLine"
+            },
+            {
+                "template_name": "PowerShell Invoke-Expression Usage",
+                "template_type": "Microsoft Sentinel KQL",
+                "severity": "Medium",
+                "description": "Detects PowerShell command lines containing IEX or Invoke-Expression.",
+                "query": "DeviceProcessEvents\n| where FileName in~ (\"powershell.exe\", \"pwsh.exe\")\n| where ProcessCommandLine has_any (\"iex\", \"invoke-expression\")\n| project Timestamp, DeviceName, InitiatingProcessAccountName, FileName, ProcessCommandLine, InitiatingProcessFileName, InitiatingProcessCommandLine"
+            }
+        ],
         "decode_level": 1,
-        "original_input": "cG93ZXJzaGVsbCUyRWV4ZSUyMC1lbmMlMjBJRVg=",
-        "case_context": {
-            "case_id": "INC-1001",
-            "analyst": "Adam Ring",
-            "alert_source": "Microsoft Defender",
-            "hostname": "WIN-TEST01",
-            "username": "test.user",
-            "analyst_notes": "Suspicious encoded PowerShell observed in process command line."
-        }
+        "original_input": "cG93ZXJzaGVsbCUyRWV4ZSUyMC1lbmMlMjBJRVg="
     },
     {
-        "timestamp": "2026-05-19T18:37:14",
+        "timestamp": "2026-05-19T18:49:59",
         "encoding": "URL",
         "decoded_text": "powershell.exe -enc IEX",
         "suspicious_keywords": [
@@ -132,16 +147,31 @@
                 "reason": "IEX is commonly used to execute PowerShell content in memory."
             }
         ],
+        "detection_templates": [
+            {
+                "template_name": "Suspicious PowerShell EncodedCommand",
+                "template_type": "Sigma",
+                "severity": "High",
+                "description": "Detects PowerShell execution using encoded command arguments.",
+                "query": "title: Suspicious PowerShell EncodedCommand\nid: 00000000-0000-0000-0000-000000000024\nstatus: experimental\ndescription: Detects PowerShell execution using encoded command arguments.\nauthor: Encoded Command Analyzer\nlogsource:\n  product: windows\n  category: process_creation\ndetection:\n  selection:\n    Image|endswith:\n      - '\\powershell.exe'\n      - '\\pwsh.exe'\n    CommandLine|contains:\n      - '-enc'\n      - '-encodedcommand'\n  condition: selection\nfalsepositives:\n  - Administrative scripts\n  - Software deployment tools\nlevel: high\ntags:\n  - attack.execution\n  - attack.t1059.001\n  - attack.defense_evasion\n  - attack.t1027"
+            },
+            {
+                "template_name": "PowerShell EncodedCommand Execution",
+                "template_type": "Microsoft Sentinel KQL",
+                "severity": "High",
+                "description": "Detects PowerShell process executions containing encoded command arguments.",
+                "query": "DeviceProcessEvents\n| where FileName in~ (\"powershell.exe\", \"pwsh.exe\")\n| where ProcessCommandLine has_any (\"-enc\", \"-encodedcommand\")\n| project Timestamp, DeviceName, InitiatingProcessAccountName, FileName, ProcessCommandLine, InitiatingProcessFileName, InitiatingProcessCommandLine"
+            },
+            {
+                "template_name": "PowerShell Invoke-Expression Usage",
+                "template_type": "Microsoft Sentinel KQL",
+                "severity": "Medium",
+                "description": "Detects PowerShell command lines containing IEX or Invoke-Expression.",
+                "query": "DeviceProcessEvents\n| where FileName in~ (\"powershell.exe\", \"pwsh.exe\")\n| where ProcessCommandLine has_any (\"iex\", \"invoke-expression\")\n| project Timestamp, DeviceName, InitiatingProcessAccountName, FileName, ProcessCommandLine, InitiatingProcessFileName, InitiatingProcessCommandLine"
+            }
+        ],
         "decode_level": 2,
         "source_encoding": "UTF-8",
-        "original_input": "cG93ZXJzaGVsbCUyRWV4ZSUyMC1lbmMlMjBJRVg=",
-        "case_context": {
-            "case_id": "INC-1001",
-            "analyst": "Adam Ring",
-            "alert_source": "Microsoft Defender",
-            "hostname": "WIN-TEST01",
-            "username": "test.user",
-            "analyst_notes": "Suspicious encoded PowerShell observed in process command line."
-        }
+        "original_input": "cG93ZXJzaGVsbCUyRWV4ZSUyMC1lbmMlMjBJRVg="
     }
 ]
