@@ -8,6 +8,7 @@
 ![MITRE ATT&CK](https://img.shields.io/badge/MITRE-ATT%26CK-orange)
 ![Detection Mapping](https://img.shields.io/badge/Detection-Rule%20Mapping-red)
 ![Templates](https://img.shields.io/badge/Templates-Sigma%20%7C%20Sentinel-blue)
+![Coverage](https://img.shields.io/badge/Coverage-Summary-success)
 ![Configurable Rules](https://img.shields.io/badge/Rules-Configurable-blue)
 ![Case Context](https://img.shields.io/badge/Case-Context-informational)
 ![Exports](https://img.shields.io/badge/Exports-JSON%20%7C%20CSV%20%7C%20Markdown%20%7C%20HTML-yellow)
@@ -20,15 +21,15 @@
 
 **Encoded Command Analyzer** is a Python-based detection engineering utility for decoding and analyzing encoded command-line content.
 
-The tool is designed to help security analysts and detection engineers triage suspicious commands, identify signs of PowerShell abuse, detect common obfuscation patterns, map findings to MITRE ATT&CK techniques, suggest related detection rule ideas, generate starter Sigma and Microsoft Sentinel KQL templates, and produce analyst-friendly investigation reports.
+The tool is designed to help security analysts and detection engineers triage suspicious commands, identify signs of PowerShell abuse, detect common obfuscation patterns, map findings to MITRE ATT&CK techniques, suggest related detection rule ideas, generate starter Sigma and Microsoft Sentinel KQL templates, summarize detection coverage, and produce analyst-friendly investigation reports.
 
-This project started as a simple Base64 decoder and has expanded into a lightweight encoded command analysis tool with CLI support, GUI support, batch file analysis, chained decoding, compressed Base64 support, XOR Hex decoding, suspicious keyword detection, configurable keyword rules, risk scoring, MITRE ATT&CK mapping, detection rule mapping, detection template generation, analyst-ready exports, unit testing, Windows executable packaging, HTML report generation, and optional case context enrichment.
+This project started as a simple Base64 decoder and has expanded into a lightweight encoded command analysis tool with CLI support, GUI support, batch file analysis, chained decoding, compressed Base64 support, XOR Hex decoding, suspicious keyword detection, configurable keyword rules, risk scoring, MITRE ATT&CK mapping, detection rule mapping, detection template generation, detection coverage summaries, analyst-ready exports, unit testing, Windows executable packaging, HTML report generation, and optional case context enrichment.
 
 ---
 
 ## Current Version
 
-**Version 24**
+**Version 25**
 
 ### Current Capabilities
 
@@ -54,6 +55,10 @@ This project started as a simple Base64 decoder and has expanded into a lightwei
 - Identify possible log sources for detection engineering
 - Generate starter Sigma detection templates
 - Generate starter Microsoft Sentinel KQL detection templates
+- Generate a detection coverage summary
+- Summarize MITRE ATT&CK techniques across all decoded results
+- Summarize detection rule ideas across all decoded results
+- Summarize Sigma and Sentinel templates across all decoded results
 - Add optional case context to investigation results
 - Add optional analyst notes to exported reports
 - Export analysis results to JSON
@@ -249,7 +254,7 @@ Detection rule mappings are suggestions and should be tuned for the target envir
 
 ## Detection Templates
 
-Version 24 adds starter detection templates.
+The tool can generate starter detection templates.
 
 When suspicious decoded content matches known patterns, the tool can suggest starter detection templates such as:
 
@@ -279,6 +284,49 @@ Detection templates may include:
 - Query or rule body
 
 These templates are intended as starting points and should be reviewed, tested, and tuned before production use.
+
+---
+
+## Detection Coverage Summary
+
+Version 25 adds a detection coverage summary.
+
+The coverage summary aggregates key detection engineering outputs across all analysis results.
+
+It summarizes:
+
+- MITRE ATT&CK techniques identified
+- Detection rule ideas suggested
+- Detection templates generated
+
+Example coverage summary:
+
+```text
+Detection Coverage Summary
+------------------------------------
+MITRE Techniques Covered:
+- T1059.001 - PowerShell
+- T1027 - Obfuscated Files or Information
+
+Detection Rule Ideas:
+- Suspicious PowerShell EncodedCommand Execution
+- PowerShell Invoke-Expression Usage
+
+Detection Templates:
+- Sigma: Suspicious PowerShell EncodedCommand
+- Microsoft Sentinel KQL: PowerShell EncodedCommand Execution
+- Microsoft Sentinel KQL: PowerShell Invoke-Expression Usage
+```
+
+The coverage summary appears in:
+
+```text
+CLI output
+output/triage_report.md
+output/triage_report.html
+```
+
+This helps analysts quickly understand which behaviors, ATT&CK techniques, and detection opportunities were identified during analysis.
 
 ---
 
@@ -587,7 +635,7 @@ python base64_decoder.py --gui
 
 ## Windows Executable Packaging
 
-Version 19 added support for packaging the Tkinter GUI as a Windows executable using PyInstaller.
+The project supports packaging the Tkinter GUI as a Windows executable using PyInstaller.
 
 Install PyInstaller:
 
@@ -688,6 +736,10 @@ Detection Templates:
 - Sigma: Suspicious PowerShell EncodedCommand
 - Microsoft Sentinel KQL: PowerShell EncodedCommand Execution
 - Microsoft Sentinel KQL: PowerShell Invoke-Expression Usage
+
+Detection Coverage Summary:
+- T1059.001 - PowerShell
+- T1027 - Obfuscated Files or Information
 ```
 
 ---
@@ -930,6 +982,7 @@ Exported fields include:
 - MITRE ATT&CK mappings
 - Detection rule mappings
 - Detection templates
+- Detection coverage summary in Markdown and HTML reports
 
 ---
 
@@ -939,6 +992,7 @@ The generated Markdown triage report includes:
 
 - Summary
 - Optional case context
+- Detection coverage summary
 - Total results
 - Highest risk level
 - Highest score
@@ -965,6 +1019,7 @@ The generated HTML report includes:
 
 - Executive-style summary
 - Optional case context
+- Detection coverage summary
 - Highest risk level
 - Total result count
 - Finding-by-finding breakdown
@@ -1005,8 +1060,9 @@ start output\triage_report.html
 9. Review MITRE ATT&CK mappings.
 10. Review detection rule mappings.
 11. Review suggested Sigma or Sentinel detection templates.
-12. Export results to JSON, CSV, Markdown, or HTML.
-13. Attach output to triage notes or investigation documentation.
+12. Review the detection coverage summary.
+13. Export results to JSON, CSV, Markdown, or HTML.
+14. Attach output to triage notes or investigation documentation.
 ```
 
 ---
@@ -1027,6 +1083,7 @@ This project can support:
 - Detection rule development
 - Sigma rule drafting
 - Microsoft Sentinel KQL drafting
+- Detection coverage review
 - Portfolio demonstration for detection engineering roles
 - Case documentation and analyst reporting
 
@@ -1052,7 +1109,6 @@ It is not intended to execute decoded content.
 
 Planned upgrades:
 
-- Version 25: Add detection coverage summary
 - Version 26: Add GUI case context fields
 - Version 27: Add report branding or custom headers
 - Version 28: Add external detection template files
