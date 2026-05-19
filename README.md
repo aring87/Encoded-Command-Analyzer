@@ -6,6 +6,7 @@
 ![Project Type](https://img.shields.io/badge/Project-Detection%20Engineering-red)
 ![Interface](https://img.shields.io/badge/Interface-CLI%20%7C%20GUI-purple)
 ![MITRE ATT&CK](https://img.shields.io/badge/MITRE-ATT%26CK-orange)
+![Exports](https://img.shields.io/badge/Exports-JSON%20%7C%20CSV%20%7C%20Markdown-yellow)
 ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 ## Overview
@@ -14,13 +15,13 @@
 
 The tool is designed to help security analysts and detection engineers triage suspicious commands, identify signs of PowerShell abuse, detect common obfuscation patterns, map findings to MITRE ATT&CK techniques, and produce analyst-friendly output for investigations.
 
-This project started as a simple Base64 decoder and has been expanded into a lightweight encoded command analysis tool with CLI support, GUI support, batch file analysis, chained decoding, suspicious keyword detection, risk scoring, MITRE ATT&CK mapping, and JSON/CSV exports.
+This project started as a simple Base64 decoder and has expanded into a lightweight encoded command analysis tool with CLI support, GUI support, batch file analysis, chained decoding, compressed Base64 support, suspicious keyword detection, risk scoring, MITRE ATT&CK mapping, and analyst-ready exports.
 
 ---
 
 ## Current Version
 
-**Version 14**
+**Version 16**
 
 ### Current Capabilities
 
@@ -29,6 +30,9 @@ This project started as a simple Base64 decoder and has been expanded into a lig
 - Decode URL-encoded strings
 - Decode Hex-encoded strings
 - Decode chained encoding patterns
+- Decode Gzip-compressed Base64
+- Decode Deflate-compressed Base64
+- Decode Raw Deflate Base64
 - Analyze a single encoded string
 - Analyze a batch file containing multiple encoded strings
 - Identify suspicious command-line keywords
@@ -37,6 +41,7 @@ This project started as a simple Base64 decoder and has been expanded into a lig
 - Map suspicious indicators to MITRE ATT&CK techniques
 - Export analysis results to JSON
 - Export analysis results to CSV
+- Export analyst triage reports to Markdown
 - Provide both CLI and Tkinter GUI interfaces
 - Display a GUI risk banner for quick analyst review
 
@@ -54,6 +59,8 @@ Encoded and obfuscated commands are commonly seen during security investigations
 - Initial access activity
 - Execution and defense evasion activity
 - SIEM and EDR alert investigation
+- Compressed payload delivery
+- Chained encoding and obfuscation
 
 This tool provides a simple way to decode suspicious content and quickly review indicators that may be useful during triage.
 
@@ -68,16 +75,16 @@ This tool provides a simple way to decode suspicious content and quickly review 
 | URL Encoding | Supported |
 | Hex Encoding | Supported |
 | Chained Encoding | Supported |
-| Gzip/Deflate Base64 | Planned |
+| Gzip Base64 | Supported |
+| Deflate Base64 | Supported |
+| Raw Deflate Base64 | Supported |
 | XOR Obfuscation | Planned |
 
 ---
 
 ## MITRE ATT&CK Mapping
 
-Version 14 adds MITRE ATT&CK mapping based on suspicious keyword matches.
-
-The tool can currently map findings to techniques such as:
+The tool maps suspicious keyword matches to MITRE ATT&CK techniques.
 
 | Keyword / Indicator | MITRE Technique | Tactic |
 |---|---|---|
@@ -161,7 +168,7 @@ The project includes a Tkinter-based GUI that allows analysts to:
 - Review suspicious keyword matches
 - View risk score and reasons
 - Review MITRE ATT&CK mappings
-- Export results to JSON and CSV
+- Export results to JSON, CSV, and Markdown
 - Clear and rerun analysis
 
 The GUI includes a color-coded risk banner:
@@ -177,7 +184,7 @@ The GUI includes a color-coded risk banner:
 
 ## CLI Interface
 
-The project also supports command-line arguments for automation-friendly usage.
+The project supports command-line arguments for automation-friendly usage.
 
 ### Analyze a Single Input
 
@@ -219,7 +226,8 @@ encoded-command-analyzer/
 │   └── sample_batch.txt
 ├── output/
 │   ├── analysis_result.json
-│   └── analysis_result.csv
+│   ├── analysis_result.csv
+│   └── triage_report.md
 ├── README.md
 ├── LICENSE
 └── .gitignore
@@ -231,11 +239,11 @@ encoded-command-analyzer/
 |---|---|
 | `base64_decoder.py` | CLI entry point and command-line argument handler |
 | `encoded_command_gui.py` | Tkinter GUI entry point |
-| `decoder_engine.py` | Decoding logic for Base64, UTF-16LE, URL, Hex, and chained decoding |
+| `decoder_engine.py` | Decoding logic for Base64, UTF-16LE, URL, Hex, chained decoding, and compressed Base64 |
 | `detection_engine.py` | Suspicious keyword detection, risk scoring, analysis logic, and MITRE ATT&CK mapping |
-| `report_exporter.py` | JSON and CSV export functions |
+| `report_exporter.py` | JSON, CSV, and Markdown export functions |
 | `samples/` | Sample input files for testing |
-| `output/` | Stores exported analysis results |
+| `output/` | Stores exported analysis results and triage reports |
 
 ---
 
@@ -416,6 +424,40 @@ MITRE ATT&CK Mapping:
 
 ---
 
+## Example: Gzip Base64 Input
+
+You can generate a Gzip Base64 test string with Python:
+
+```python
+import base64
+import gzip
+
+text = "powershell.exe -enc IEX"
+
+compressed = gzip.compress(text.encode("utf-8"))
+encoded = base64.b64encode(compressed).decode("utf-8")
+
+print(encoded)
+```
+
+Then analyze it:
+
+```powershell
+python base64_decoder.py --input "PASTE_GZIP_BASE64_HERE"
+```
+
+Expected result:
+
+```text
+Detected Encoding: Gzip Base64
+Decoded Output:
+powershell.exe -enc IEX
+
+Risk Level: High
+```
+
+---
+
 ## Example: Batch File Analysis
 
 Create a text file with one encoded value per line:
@@ -449,6 +491,7 @@ The tool can export results to:
 ```text
 output/analysis_result.json
 output/analysis_result.csv
+output/triage_report.md
 ```
 
 Exported fields include:
@@ -469,6 +512,31 @@ Exported fields include:
 
 ---
 
+## Analyst Triage Report
+
+Version 15 added Markdown triage report generation.
+
+The generated report includes:
+
+- Summary
+- Total results
+- Highest risk level
+- Highest score
+- Original input
+- Decoded output
+- Suspicious keyword matches
+- Risk score
+- Risk reasons
+- MITRE ATT&CK mappings
+
+The report is saved to:
+
+```text
+output/triage_report.md
+```
+
+---
+
 ## Analyst Workflow
 
 ```text
@@ -480,7 +548,7 @@ Exported fields include:
 6. Review suspicious keyword matches.
 7. Review risk score and reasons.
 8. Review MITRE ATT&CK mappings.
-9. Export results to JSON or CSV.
+9. Export results to JSON, CSV, or Markdown.
 10. Attach output to triage notes or investigation documentation.
 ```
 
@@ -522,12 +590,12 @@ It is not intended to execute decoded content.
 
 Planned upgrades:
 
-- Version 15: Generate analyst triage reports
-- Version 16: Add Gzip/Deflate Base64 support
 - Version 17: Add XOR decode helper
 - Version 18: Add unit tests
 - Version 19: Package as an executable
 - Version 20: Add detection rule mapping
+- Version 21: Add configurable keyword rules
+- Version 22: Add HTML report export
 
 ---
 
