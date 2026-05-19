@@ -1,0 +1,28 @@
+[
+    {
+        "timestamp": "2026-05-18T22:55:14",
+        "encoding": "UTF-8",
+        "decoded_text": "p\u0000o\u0000w\u0000e\u0000r\u0000s\u0000h\u0000e\u0000l\u0000l\u0000.\u0000e\u0000x\u0000e\u0000 \u0000-\u0000e\u0000n\u0000c\u0000 \u0000I\u0000E\u0000X\u0000",
+        "suspicious_keywords": [],
+        "risk_level": "None",
+        "risk_score": 0,
+        "reasons": []
+    },
+    {
+        "timestamp": "2026-05-18T22:55:14",
+        "encoding": "UTF-16LE",
+        "decoded_text": "powershell.exe -enc IEX",
+        "suspicious_keywords": [
+            "powershell",
+            "-enc",
+            "iex"
+        ],
+        "risk_level": "High",
+        "risk_score": 7,
+        "reasons": [
+            "powershell may indicate suspicious command-line or PowerShell behavior.",
+            "-enc may indicate suspicious command-line or PowerShell behavior.",
+            "iex is commonly used in malicious or obfuscated script execution."
+        ]
+    }
+]
