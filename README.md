@@ -8,6 +8,7 @@
 ![MITRE ATT&CK](https://img.shields.io/badge/MITRE-ATT%26CK-orange)
 ![Exports](https://img.shields.io/badge/Exports-JSON%20%7C%20CSV%20%7C%20Markdown-yellow)
 ![Decoding](https://img.shields.io/badge/Decoding-Base64%20%7C%20URL%20%7C%20Hex%20%7C%20XOR-blueviolet)
+![Testing](https://img.shields.io/badge/Testing-Unittest-brightgreen)
 ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 ## Overview
@@ -16,13 +17,13 @@
 
 The tool is designed to help security analysts and detection engineers triage suspicious commands, identify signs of PowerShell abuse, detect common obfuscation patterns, map findings to MITRE ATT&CK techniques, and produce analyst-friendly output for investigations.
 
-This project started as a simple Base64 decoder and has expanded into a lightweight encoded command analysis tool with CLI support, GUI support, batch file analysis, chained decoding, compressed Base64 support, XOR Hex decoding, suspicious keyword detection, risk scoring, MITRE ATT&CK mapping, and analyst-ready exports.
+This project started as a simple Base64 decoder and has expanded into a lightweight encoded command analysis tool with CLI support, GUI support, batch file analysis, chained decoding, compressed Base64 support, XOR Hex decoding, suspicious keyword detection, risk scoring, MITRE ATT&CK mapping, analyst-ready exports, and unit testing.
 
 ---
 
 ## Current Version
 
-**Version 17**
+**Version 18**
 
 ### Current Capabilities
 
@@ -47,6 +48,10 @@ This project started as a simple Base64 decoder and has expanded into a lightwei
 - Export analyst triage reports to Markdown
 - Provide both CLI and Tkinter GUI interfaces
 - Display a GUI risk banner for quick analyst review
+- Unit tests for decoder logic
+- Unit tests for detection logic
+- Unit tests for risk scoring
+- Unit tests for MITRE ATT&CK mapping
 
 ---
 
@@ -163,9 +168,9 @@ This may be scored as **High** because it contains PowerShell execution, encoded
 
 ## XOR Hex Decoding
 
-Version 17 adds single-byte XOR Hex decoding support.
+Version 17 added single-byte XOR Hex decoding support.
 
-The tool can brute-force possible XOR keys, score the decoded candidates, and return the highest-confidence result.
+The tool can brute-force possible XOR keys, score decoded candidates, and return the highest-confidence result.
 
 Example XOR Hex input:
 
@@ -228,6 +233,12 @@ The project supports command-line arguments for automation-friendly usage.
 python base64_decoder.py --input "SGVsbG8gd29ybGQ="
 ```
 
+### Analyze Suspicious Chained Input
+
+```powershell
+python base64_decoder.py --input "cG93ZXJzaGVsbCUyRWV4ZSUyMC1lbmMlMjBJRVg="
+```
+
 ### Analyze XOR Hex Input
 
 ```powershell
@@ -266,6 +277,9 @@ encoded-command-analyzer/
 ├── report_exporter.py
 ├── samples/
 │   └── sample_batch.txt
+├── tests/
+│   ├── test_decoder_engine.py
+│   └── test_detection_engine.py
 ├── output/
 │   ├── analysis_result.json
 │   ├── analysis_result.csv
@@ -285,6 +299,7 @@ encoded-command-analyzer/
 | `detection_engine.py` | Suspicious keyword detection, risk scoring, analysis logic, and MITRE ATT&CK mapping |
 | `report_exporter.py` | JSON, CSV, and Markdown export functions |
 | `samples/` | Sample input files for testing |
+| `tests/` | Unit tests for decoder and detection logic |
 | `output/` | Stores exported analysis results and triage reports |
 
 ---
@@ -299,6 +314,45 @@ Tested with:
 
 ```text
 Python 3.x
+```
+
+---
+
+## Testing
+
+This project includes unit tests for the decoder and detection engines.
+
+The tests validate:
+
+- Base64 decoding
+- PowerShell UTF-16LE decoding
+- URL decoding
+- Hex decoding
+- Chained decoding
+- Gzip Base64 decoding
+- XOR Hex decoding
+- Suspicious keyword detection
+- Risk scoring
+- MITRE ATT&CK mapping
+
+Run all tests from the project root:
+
+```powershell
+python -m unittest discover -s tests
+```
+
+Expected result:
+
+```text
+OK
+```
+
+Test files are located in:
+
+```text
+tests/
+├── test_decoder_engine.py
+└── test_detection_engine.py
 ```
 
 ---
@@ -657,7 +711,6 @@ It is not intended to execute decoded content.
 
 Planned upgrades:
 
-- Version 18: Add unit tests
 - Version 19: Package as an executable
 - Version 20: Add detection rule mapping
 - Version 21: Add configurable keyword rules
