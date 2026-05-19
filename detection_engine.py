@@ -1,82 +1,171 @@
+import json
+import os
 from datetime import datetime
 
 
+DEFAULT_KEYWORD_RULES = [
+    {
+        "keyword": "powershell",
+        "severity": "Medium",
+        "score": 2,
+        "reason": "powershell may indicate suspicious command-line or PowerShell behavior."
+    },
+    {
+        "keyword": "-enc",
+        "severity": "High",
+        "score": 2,
+        "reason": "-enc may indicate suspicious command-line or PowerShell behavior."
+    },
+    {
+        "keyword": "-encodedcommand",
+        "severity": "High",
+        "score": 2,
+        "reason": "-encodedcommand may indicate encoded PowerShell command execution."
+    },
+    {
+        "keyword": "iex",
+        "severity": "High",
+        "score": 3,
+        "reason": "iex is commonly used in malicious or obfuscated script execution."
+    },
+    {
+        "keyword": "invoke-expression",
+        "severity": "High",
+        "score": 3,
+        "reason": "Invoke-Expression is commonly used to execute PowerShell expressions or downloaded content."
+    },
+    {
+        "keyword": "downloadstring",
+        "severity": "High",
+        "score": 3,
+        "reason": "DownloadString may indicate remote payload retrieval."
+    },
+    {
+        "keyword": "frombase64string",
+        "severity": "Medium",
+        "score": 2,
+        "reason": "FromBase64String may indicate embedded encoded payload content."
+    },
+    {
+        "keyword": "webclient",
+        "severity": "Medium",
+        "score": 2,
+        "reason": "WebClient may be used to download remote tools or payloads."
+    },
+    {
+        "keyword": "start-process",
+        "severity": "Medium",
+        "score": 1,
+        "reason": "Start-Process may indicate child process execution."
+    },
+    {
+        "keyword": "cmd.exe",
+        "severity": "Low",
+        "score": 1,
+        "reason": "cmd.exe may provide useful command-line execution context."
+    },
+    {
+        "keyword": "http",
+        "severity": "Medium",
+        "score": 1,
+        "reason": "HTTP may indicate remote resource or payload access."
+    },
+    {
+        "keyword": "https",
+        "severity": "Medium",
+        "score": 1,
+        "reason": "HTTPS may indicate remote resource or payload access."
+    },
+    {
+        "keyword": "bypass",
+        "severity": "High",
+        "score": 2,
+        "reason": "Bypass may indicate attempts to evade execution policy or security controls."
+    },
+    {
+        "keyword": "hidden",
+        "severity": "Medium",
+        "score": 2,
+        "reason": "Hidden execution may indicate an attempt to conceal command activity."
+    },
+    {
+        "keyword": "nop",
+        "severity": "Medium",
+        "score": 1,
+        "reason": "NoProfile usage may indicate an attempt to avoid loading normal PowerShell profile settings."
+    },
+    {
+        "keyword": "wscript",
+        "severity": "Medium",
+        "score": 2,
+        "reason": "wscript can execute script content on Windows systems."
+    },
+    {
+        "keyword": "cscript",
+        "severity": "Medium",
+        "score": 2,
+        "reason": "cscript can execute script content on Windows systems."
+    }
+]
+
+
+def load_keyword_rules():
+    config_path = os.path.join("config", "keyword_rules.json")
+
+    if not os.path.exists(config_path):
+        return DEFAULT_KEYWORD_RULES
+
+    try:
+        with open(config_path, "r", encoding="utf-8") as file:
+            config = json.load(file)
+
+        rules = config.get("keywords", [])
+
+        if not rules:
+            return DEFAULT_KEYWORD_RULES
+
+        return rules
+
+    except Exception:
+        return DEFAULT_KEYWORD_RULES
+
 def check_suspicious_keywords(decoded_text):
-    suspicious_keywords = [
-        "powershell",
-        "-enc",
-        "-encodedcommand",
-        "iex",
-        "invoke-expression",
-        "downloadstring",
-        "frombase64string",
-        "webclient",
-        "start-process",
-        "cmd.exe",
-        "http",
-        "https",
-        "bypass",
-        "hidden",
-        "nop",
-        "wscript",
-        "cscript"
-    ]
+    keyword_rules = load_keyword_rules()
+    decoded_text_lower = decoded_text.lower()
 
     found_keywords = []
 
-    for keyword in suspicious_keywords:
-        if keyword in decoded_text.lower():
+    for rule in keyword_rules:
+        keyword = rule.get("keyword", "").lower()
+
+        if keyword and keyword in decoded_text_lower:
             found_keywords.append(keyword)
 
     return found_keywords
 
 
 def calculate_risk_score(found_keywords):
+    keyword_rules = load_keyword_rules()
+    keyword_rule_map = {}
+
+    for rule in keyword_rules:
+        keyword_rule_map[rule.get("keyword", "").lower()] = rule
+
     score = 0
     reasons = []
 
-    high_risk_keywords = [
-        "iex",
-        "invoke-expression",
-        "downloadstring",
-        "frombase64string",
-        "webclient"
-    ]
-
-    medium_risk_keywords = [
-        "powershell",
-        "-enc",
-        "-encodedcommand",
-        "bypass",
-        "hidden",
-        "start-process",
-        "nop",
-        "wscript",
-        "cscript"
-    ]
-
-    low_risk_keywords = [
-        "cmd.exe",
-        "http",
-        "https"
-    ]
-
     for keyword in found_keywords:
-        if keyword in high_risk_keywords:
-            score += 3
-            reasons.append(f"{keyword} is commonly used in malicious or obfuscated script execution.")
-        elif keyword in medium_risk_keywords:
-            score += 2
-            reasons.append(f"{keyword} may indicate suspicious command-line or PowerShell behavior.")
-        elif keyword in low_risk_keywords:
-            score += 1
-            reasons.append(f"{keyword} may provide useful investigation context.")
+        rule = keyword_rule_map.get(keyword.lower())
+
+        if rule:
+            score += int(rule.get("score", 1))
+            reasons.append(rule.get("reason", f"{keyword} matched a suspicious keyword."))
 
     if score >= 6:
         risk_level = "High"
     elif score >= 3:
         risk_level = "Medium"
-    elif score > 0:
+    elif score >= 1:
         risk_level = "Low"
     else:
         risk_level = "None"

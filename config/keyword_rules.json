@@ -1,0 +1,106 @@
+{
+  "keywords": [
+    {
+      "keyword": "powershell",
+      "severity": "Medium",
+      "score": 2,
+      "reason": "powershell may indicate suspicious command-line or PowerShell behavior."
+    },
+    {
+      "keyword": "-enc",
+      "severity": "High",
+      "score": 2,
+      "reason": "-enc may indicate suspicious command-line or PowerShell behavior."
+    },
+    {
+      "keyword": "-encodedcommand",
+      "severity": "High",
+      "score": 2,
+      "reason": "-encodedcommand may indicate encoded PowerShell command execution."
+    },
+    {
+      "keyword": "iex",
+      "severity": "High",
+      "score": 3,
+      "reason": "iex is commonly used in malicious or obfuscated script execution."
+    },
+    {
+      "keyword": "invoke-expression",
+      "severity": "High",
+      "score": 3,
+      "reason": "Invoke-Expression is commonly used to execute PowerShell expressions or downloaded content."
+    },
+    {
+      "keyword": "downloadstring",
+      "severity": "High",
+      "score": 3,
+      "reason": "DownloadString may indicate remote payload retrieval."
+    },
+    {
+      "keyword": "frombase64string",
+      "severity": "Medium",
+      "score": 2,
+      "reason": "FromBase64String may indicate embedded encoded payload content."
+    },
+    {
+      "keyword": "webclient",
+      "severity": "Medium",
+      "score": 2,
+      "reason": "WebClient may be used to download remote tools or payloads."
+    },
+    {
+      "keyword": "start-process",
+      "severity": "Medium",
+      "score": 1,
+      "reason": "Start-Process may indicate child process execution."
+    },
+    {
+      "keyword": "cmd.exe",
+      "severity": "Low",
+      "score": 1,
+      "reason": "cmd.exe may provide useful command-line execution context."
+    },
+    {
+      "keyword": "http",
+      "severity": "Medium",
+      "score": 1,
+      "reason": "HTTP may indicate remote resource or payload access."
+    },
+    {
+      "keyword": "https",
+      "severity": "Medium",
+      "score": 1,
+      "reason": "HTTPS may indicate remote resource or payload access."
+    },
+    {
+      "keyword": "bypass",
+      "severity": "High",
+      "score": 2,
+      "reason": "Bypass may indicate attempts to evade execution policy or security controls."
+    },
+    {
+      "keyword": "hidden",
+      "severity": "Medium",
+      "score": 2,
+      "reason": "Hidden execution may indicate an attempt to conceal command activity."
+    },
+    {
+      "keyword": "nop",
+      "severity": "Medium",
+      "score": 1,
+      "reason": "NoProfile usage may indicate an attempt to avoid loading normal PowerShell profile settings."
+    },
+    {
+      "keyword": "wscript",
+      "severity": "Medium",
+      "score": 2,
+      "reason": "wscript can execute script content on Windows systems."
+    },
+    {
+      "keyword": "cscript",
+      "severity": "Medium",
+      "score": 2,
+      "reason": "cscript can execute script content on Windows systems."
+    }
+  ]
+}
