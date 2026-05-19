@@ -8,6 +8,7 @@
 ![MITRE ATT&CK](https://img.shields.io/badge/MITRE-ATT%26CK-orange)
 ![Detection Mapping](https://img.shields.io/badge/Detection-Rule%20Mapping-red)
 ![Configurable Rules](https://img.shields.io/badge/Rules-Configurable-blue)
+![Case Context](https://img.shields.io/badge/Case-Context-informational)
 ![Exports](https://img.shields.io/badge/Exports-JSON%20%7C%20CSV%20%7C%20Markdown%20%7C%20HTML-yellow)
 ![Decoding](https://img.shields.io/badge/Decoding-Base64%20%7C%20URL%20%7C%20Hex%20%7C%20XOR-blueviolet)
 ![Testing](https://img.shields.io/badge/Testing-Unittest-brightgreen)
@@ -18,15 +19,15 @@
 
 **Encoded Command Analyzer** is a Python-based detection engineering utility for decoding and analyzing encoded command-line content.
 
-The tool is designed to help security analysts and detection engineers triage suspicious commands, identify signs of PowerShell abuse, detect common obfuscation patterns, map findings to MITRE ATT&CK techniques, suggest related detection rule ideas, and produce analyst-friendly output for investigations.
+The tool is designed to help security analysts and detection engineers triage suspicious commands, identify signs of PowerShell abuse, detect common obfuscation patterns, map findings to MITRE ATT&CK techniques, suggest related detection rule ideas, and produce analyst-friendly investigation reports.
 
-This project started as a simple Base64 decoder and has expanded into a lightweight encoded command analysis tool with CLI support, GUI support, batch file analysis, chained decoding, compressed Base64 support, XOR Hex decoding, suspicious keyword detection, configurable keyword rules, risk scoring, MITRE ATT&CK mapping, detection rule mapping, analyst-ready exports, unit testing, Windows executable packaging, and HTML report generation.
+This project started as a simple Base64 decoder and has expanded into a lightweight encoded command analysis tool with CLI support, GUI support, batch file analysis, chained decoding, compressed Base64 support, XOR Hex decoding, suspicious keyword detection, configurable keyword rules, risk scoring, MITRE ATT&CK mapping, detection rule mapping, analyst-ready exports, unit testing, Windows executable packaging, HTML report generation, and case context enrichment.
 
 ---
 
 ## Current Version
 
-**Version 22**
+**Version 23**
 
 ### Current Capabilities
 
@@ -50,6 +51,8 @@ This project started as a simple Base64 decoder and has expanded into a lightwei
 - Map suspicious indicators to MITRE ATT&CK techniques
 - Suggest related detection rule ideas
 - Identify possible log sources for detection engineering
+- Add case context to investigation results
+- Add analyst notes to exported reports
 - Export analysis results to JSON
 - Export analysis results to CSV
 - Export analyst triage reports to Markdown and HTML
@@ -99,6 +102,42 @@ This tool provides a simple way to decode suspicious content and quickly review 
 | Deflate Base64 | Supported |
 | Raw Deflate Base64 | Supported |
 | XOR Hex | Supported |
+
+---
+
+## Case Context Enrichment
+
+Version 23 adds analyst case context fields.
+
+Case context can be included in exported reports using CLI arguments.
+
+Supported case fields:
+
+| Field | CLI Argument |
+|---|---|
+| Case ID | `--case-id` |
+| Analyst Name | `--analyst` |
+| Alert Source | `--alert-source` |
+| Hostname | `--hostname` |
+| Username | `--username` |
+| Analyst Notes | `--notes` |
+
+Example:
+
+```powershell
+python base64_decoder.py --input "cG93ZXJzaGVsbCUyRWV4ZSUyMC1lbmMlMjBJRVg=" --export --case-id "INC-1001" --analyst "Adam Ring" --alert-source "Microsoft Defender" --hostname "WIN-TEST01" --username "test.user" --notes "Suspicious encoded PowerShell observed in process command line."
+```
+
+The case context is included in:
+
+```text
+output/analysis_result.json
+output/analysis_result.csv
+output/triage_report.md
+output/triage_report.html
+```
+
+This makes the exported reports more useful as investigation artifacts.
 
 ---
 
@@ -344,6 +383,12 @@ python base64_decoder.py --input "cG93ZXJzaGVsbCUyRWV4ZSUyMC1lbmMlMjBJRVg="
 
 ```powershell
 python base64_decoder.py --input "534c544651504b464f4f0d465b46030e464d40036a667b"
+```
+
+### Analyze with Case Context
+
+```powershell
+python base64_decoder.py --input "cG93ZXJzaGVsbCUyRWV4ZSUyMC1lbmMlMjBJRVg=" --export --case-id "INC-1001" --analyst "Adam Ring" --alert-source "Microsoft Defender" --hostname "WIN-TEST01" --username "test.user" --notes "Suspicious encoded PowerShell observed in process command line."
 ```
 
 ### Analyze a Batch File
@@ -796,6 +841,12 @@ output/triage_report.html
 Exported fields include:
 
 - Timestamp
+- Case ID
+- Analyst
+- Alert Source
+- Hostname
+- Username
+- Analyst Notes
 - Batch item
 - Source file
 - Original input
@@ -817,6 +868,7 @@ Exported fields include:
 The generated Markdown triage report includes:
 
 - Summary
+- Case context
 - Total results
 - Highest risk level
 - Highest score
@@ -838,11 +890,10 @@ output/triage_report.md
 
 ## HTML Triage Report
 
-Version 22 added HTML triage report generation.
-
 The generated HTML report includes:
 
 - Executive-style summary
+- Case context
 - Highest risk level
 - Total result count
 - Finding-by-finding breakdown
@@ -874,14 +925,15 @@ start output\triage_report.html
 1. Copy suspicious encoded command from an alert.
 2. Open Encoded Command Analyzer.
 3. Paste the encoded value or load a batch file.
-4. Run analysis.
-5. Review decoded output.
-6. Review suspicious keyword matches.
-7. Review risk score and reasons.
-8. Review MITRE ATT&CK mappings.
-9. Review detection rule mappings.
-10. Export results to JSON, CSV, Markdown, or HTML.
-11. Attach output to triage notes or investigation documentation.
+4. Add case context when needed.
+5. Run analysis.
+6. Review decoded output.
+7. Review suspicious keyword matches.
+8. Review risk score and reasons.
+9. Review MITRE ATT&CK mappings.
+10. Review detection rule mappings.
+11. Export results to JSON, CSV, Markdown, or HTML.
+12. Attach output to triage notes or investigation documentation.
 ```
 
 ---
@@ -901,6 +953,7 @@ This project can support:
 - ATT&CK mapping practice
 - Detection rule development
 - Portfolio demonstration for detection engineering roles
+- Case documentation and analyst reporting
 
 ---
 
@@ -914,6 +967,7 @@ This project is designed for defensive security use cases, including:
 - Incident response support
 - Alert enrichment
 - Analyst training
+- Investigation documentation
 
 It is not intended to execute decoded content.
 
@@ -923,9 +977,10 @@ It is not intended to execute decoded content.
 
 Planned upgrades:
 
-- Version 23: Add enrichment fields for analyst notes
 - Version 24: Add Sigma or Sentinel rule templates
 - Version 25: Add detection coverage summary
+- Version 26: Add GUI case context fields
+- Version 27: Add report branding or custom headers
 
 ---
 
