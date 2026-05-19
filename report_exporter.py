@@ -33,7 +33,8 @@ def export_to_csv(analysis_results):
             "risk_level",
             "risk_score",
             "reasons",
-            "mitre_attack"
+            "mitre_attack",
+            "detection_rules"
         ]
 
         writer = csv.DictWriter(file, fieldnames=fieldnames)
@@ -48,6 +49,13 @@ def export_to_csv(analysis_results):
                     f"({technique.get('tactic')})"
                 )
 
+        detection_rule_values = []
+
+        for rule in result.get("detection_rules", []):
+            detection_rule_values.append(
+                f"{rule.get('rule_name')} ({rule.get('severity')})"
+            )
+        
             writer.writerow({
                 "timestamp": result.get("timestamp", ""),
                 "batch_item": result.get("batch_item", ""),
@@ -61,7 +69,8 @@ def export_to_csv(analysis_results):
                 "risk_level": result.get("risk_level", ""),
                 "risk_score": result.get("risk_score", ""),
                 "reasons": " | ".join(result.get("reasons", [])),
-                "mitre_attack": " | ".join(mitre_values)
+                "mitre_attack": " | ".join(mitre_values),
+                "detection_rules": " | ".join(detection_rule_values)
             })
 
     return file_path
@@ -154,6 +163,22 @@ def export_to_markdown(analysis_results):
                     file.write(f"  - Reason: {technique.get('reason')}\n")
             else:
                 file.write("- No MITRE ATT&CK mappings identified.\n")
+
+            file.write("\n")
+
+            file.write("### Detection Rule Mapping\n\n")
+
+            detection_rules = result.get("detection_rules", [])
+
+            if detection_rules:
+                for rule in detection_rules:
+                    file.write(f"- {rule.get('rule_name')}\n")
+                    file.write(f"  - Severity: {rule.get('severity')}\n")
+                    file.write(f"  - Description: {rule.get('description')}\n")
+                    file.write(f"  - Log Sources: {', '.join(rule.get('log_sources', []))}\n")
+                    file.write(f"  - Reason: {rule.get('reason')}\n")
+            else:
+                file.write("- No detection rule mappings identified.\n")
 
             file.write("\n---\n\n")
 

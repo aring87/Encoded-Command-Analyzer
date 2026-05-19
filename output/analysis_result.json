@@ -1,6 +1,6 @@
 [
     {
-        "timestamp": "2026-05-19T13:53:20",
+        "timestamp": "2026-05-19T18:03:58",
         "encoding": "UTF-8",
         "decoded_text": "powershell%2Eexe%20-enc%20IEX",
         "suspicious_keywords": [
@@ -29,11 +29,42 @@
                 "reason": "Encoded command usage may indicate command obfuscation."
             }
         ],
+        "detection_rules": [
+            {
+                "rule_name": "Suspicious PowerShell EncodedCommand Execution",
+                "description": "Detects PowerShell execution using encoded command indicators.",
+                "severity": "High",
+                "required_keywords": [
+                    "powershell",
+                    "-enc"
+                ],
+                "log_sources": [
+                    "Microsoft Defender DeviceProcessEvents",
+                    "Sysmon Event ID 1",
+                    "Windows Security Event ID 4688"
+                ],
+                "reason": "PowerShell execution with encoded command usage may indicate obfuscated script execution."
+            },
+            {
+                "rule_name": "PowerShell Invoke-Expression Usage",
+                "description": "Detects use of IEX or Invoke-Expression patterns.",
+                "severity": "Medium",
+                "required_keywords": [
+                    "iex"
+                ],
+                "log_sources": [
+                    "Microsoft Defender DeviceProcessEvents",
+                    "PowerShell Script Block Logs",
+                    "Sysmon Event ID 1"
+                ],
+                "reason": "IEX is commonly used to execute PowerShell content in memory."
+            }
+        ],
         "decode_level": 1,
         "original_input": "cG93ZXJzaGVsbCUyRWV4ZSUyMC1lbmMlMjBJRVg="
     },
     {
-        "timestamp": "2026-05-19T13:53:20",
+        "timestamp": "2026-05-19T18:03:58",
         "encoding": "URL",
         "decoded_text": "powershell.exe -enc IEX",
         "suspicious_keywords": [
@@ -60,6 +91,37 @@
                 "technique_name": "Obfuscated Files or Information",
                 "tactic": "Defense Evasion",
                 "reason": "Encoded command usage may indicate command obfuscation."
+            }
+        ],
+        "detection_rules": [
+            {
+                "rule_name": "Suspicious PowerShell EncodedCommand Execution",
+                "description": "Detects PowerShell execution using encoded command indicators.",
+                "severity": "High",
+                "required_keywords": [
+                    "powershell",
+                    "-enc"
+                ],
+                "log_sources": [
+                    "Microsoft Defender DeviceProcessEvents",
+                    "Sysmon Event ID 1",
+                    "Windows Security Event ID 4688"
+                ],
+                "reason": "PowerShell execution with encoded command usage may indicate obfuscated script execution."
+            },
+            {
+                "rule_name": "PowerShell Invoke-Expression Usage",
+                "description": "Detects use of IEX or Invoke-Expression patterns.",
+                "severity": "Medium",
+                "required_keywords": [
+                    "iex"
+                ],
+                "log_sources": [
+                    "Microsoft Defender DeviceProcessEvents",
+                    "PowerShell Script Block Logs",
+                    "Sysmon Event ID 1"
+                ],
+                "reason": "IEX is commonly used to execute PowerShell content in memory."
             }
         ],
         "decode_level": 2,

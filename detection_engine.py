@@ -193,12 +193,111 @@ def map_mitre_attack(found_keywords):
 
     return mitre_mappings
 
+def map_detection_rules(found_keywords):
+    detection_rules = []
+
+    keyword_set = set(found_keywords)
+
+    rule_definitions = [
+        {
+            "rule_name": "Suspicious PowerShell EncodedCommand Execution",
+            "description": "Detects PowerShell execution using encoded command indicators.",
+            "severity": "High",
+            "required_keywords": ["powershell", "-enc"],
+            "log_sources": [
+                "Microsoft Defender DeviceProcessEvents",
+                "Sysmon Event ID 1",
+                "Windows Security Event ID 4688"
+            ],
+            "reason": "PowerShell execution with encoded command usage may indicate obfuscated script execution."
+        },
+        {
+            "rule_name": "PowerShell Invoke-Expression Usage",
+            "description": "Detects use of IEX or Invoke-Expression patterns.",
+            "severity": "Medium",
+            "required_keywords": ["iex"],
+            "log_sources": [
+                "Microsoft Defender DeviceProcessEvents",
+                "PowerShell Script Block Logs",
+                "Sysmon Event ID 1"
+            ],
+            "reason": "IEX is commonly used to execute PowerShell content in memory."
+        },
+        {
+            "rule_name": "PowerShell Remote Download Cradle",
+            "description": "Detects PowerShell download cradle behavior using WebClient or DownloadString.",
+            "severity": "High",
+            "required_keywords": ["downloadstring"],
+            "log_sources": [
+                "PowerShell Script Block Logs",
+                "Microsoft Defender DeviceProcessEvents",
+                "Proxy or Web Gateway Logs"
+            ],
+            "reason": "DownloadString may indicate remote payload retrieval."
+        },
+        {
+            "rule_name": "Base64 Decoding Inside Script Content",
+            "description": "Detects use of FromBase64String inside decoded script content.",
+            "severity": "Medium",
+            "required_keywords": ["frombase64string"],
+            "log_sources": [
+                "PowerShell Script Block Logs",
+                "Microsoft Defender DeviceProcessEvents"
+            ],
+            "reason": "FromBase64String may indicate embedded encoded payload content."
+        },
+        {
+            "rule_name": "Hidden PowerShell Window Execution",
+            "description": "Detects PowerShell or script execution using hidden window indicators.",
+            "severity": "Medium",
+            "required_keywords": ["hidden"],
+            "log_sources": [
+                "Microsoft Defender DeviceProcessEvents",
+                "Sysmon Event ID 1",
+                "Windows Security Event ID 4688"
+            ],
+            "reason": "Hidden window execution may indicate an attempt to conceal activity from the user."
+        },
+        {
+            "rule_name": "Windows Script Host Execution",
+            "description": "Detects suspicious Windows Script Host usage.",
+            "severity": "Medium",
+            "required_keywords": ["wscript"],
+            "log_sources": [
+                "Microsoft Defender DeviceProcessEvents",
+                "Sysmon Event ID 1",
+                "Windows Security Event ID 4688"
+            ],
+            "reason": "wscript may be used to execute script content on Windows endpoints."
+        },
+        {
+            "rule_name": "Command Shell Execution",
+            "description": "Detects command shell usage that may support script execution or payload staging.",
+            "severity": "Low",
+            "required_keywords": ["cmd.exe"],
+            "log_sources": [
+                "Microsoft Defender DeviceProcessEvents",
+                "Sysmon Event ID 1",
+                "Windows Security Event ID 4688"
+            ],
+            "reason": "cmd.exe usage may provide useful context for process-chain investigation."
+        }
+    ]
+
+    for rule in rule_definitions:
+        required_keywords = set(rule["required_keywords"])
+
+        if required_keywords.issubset(keyword_set):
+            detection_rules.append(rule)
+
+    return detection_rules
 
 def analyze_decoded_result(result):
     decoded_text = result["decoded_text"]
     found_keywords = check_suspicious_keywords(decoded_text)
     risk_level, score, reasons = calculate_risk_score(found_keywords)
     mitre_mappings = map_mitre_attack(found_keywords)
+    detection_rules = map_detection_rules(found_keywords)
 
     analysis = {
         "timestamp": datetime.now().isoformat(timespec="seconds"),
@@ -208,7 +307,8 @@ def analyze_decoded_result(result):
         "risk_level": risk_level,
         "risk_score": score,
         "reasons": reasons,
-        "mitre_attack": mitre_mappings
+        "mitre_attack": mitre_mappings,
+        "detection_rules": detection_rules
     }
 
     if "decode_level" in result:

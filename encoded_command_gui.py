@@ -307,6 +307,22 @@ class EncodedCommandAnalyzerGUI:
                     f"  Reason: {technique.get('reason')}\n"
                 )
 
+        detection_rules = analysis.get("detection_rules", [])
+
+        if detection_rules:
+            self.output_box.insert(tk.END, "\nDetection Rule Mapping:\n")
+            self.output_box.insert(tk.END, "------------------------------------\n")
+
+            for rule in detection_rules:
+                self.output_box.insert(tk.END, f"- {rule.get('rule_name')}\n")
+                self.output_box.insert(tk.END, f"  Severity: {rule.get('severity')}\n")
+                self.output_box.insert(tk.END, f"  Description: {rule.get('description')}\n")
+                self.output_box.insert(
+                    tk.END,
+                    f"  Log Sources: {', '.join(rule.get('log_sources', []))}\n"
+                )
+                self.output_box.insert(tk.END, f"  Reason: {rule.get('reason')}\n")
+
         self.output_box.insert(tk.END, "\n")
 
     def export_results(self):

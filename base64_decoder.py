@@ -61,6 +61,19 @@ def print_analysis_result(analysis):
             )
             print(f"  Reason: {technique.get('reason')}")
 
+    detection_rules = analysis.get("detection_rules", [])
+
+    if detection_rules:
+        print("\nDetection Rule Mapping:")
+        print("------------------------------------")
+
+        for rule in detection_rules:
+            print(f"- {rule.get('rule_name')}")
+            print(f"  Severity: {rule.get('severity')}")
+            print(f"  Description: {rule.get('description')}")
+            print(f"  Log Sources: {', '.join(rule.get('log_sources', []))}")
+            print(f"  Reason: {rule.get('reason')}")
+
     print()
 
 
