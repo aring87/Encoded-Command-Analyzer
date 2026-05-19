@@ -290,6 +290,23 @@ class EncodedCommandAnalyzerGUI:
             for reason in reasons:
                 self.output_box.insert(tk.END, f"- {reason}\n")
 
+        mitre_attack = analysis.get("mitre_attack", [])
+
+        if mitre_attack:
+            self.output_box.insert(tk.END, "\nMITRE ATT&CK Mapping:\n")
+            self.output_box.insert(tk.END, "------------------------------------\n")
+
+            for technique in mitre_attack:
+                self.output_box.insert(
+                    tk.END,
+                    f"- {technique.get('technique_id')} - {technique.get('technique_name')} "
+                    f"({technique.get('tactic')})\n"
+                )
+                self.output_box.insert(
+                    tk.END,
+                    f"  Reason: {technique.get('reason')}\n"
+                )
+
         self.output_box.insert(tk.END, "\n")
 
     def export_results(self):

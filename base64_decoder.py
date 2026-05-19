@@ -48,6 +48,19 @@ def print_analysis_result(analysis):
         for reason in reasons:
             print(f"- {reason}")
 
+    mitre_attack = analysis.get("mitre_attack", [])
+
+    if mitre_attack:
+        print("\nMITRE ATT&CK Mapping:")
+        print("------------------------------------")
+
+        for technique in mitre_attack:
+            print(
+                f"- {technique.get('technique_id')} - {technique.get('technique_name')} "
+                f"({technique.get('tactic')})"
+            )
+            print(f"  Reason: {technique.get('reason')}")
+
     print()
 
 

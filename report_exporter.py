@@ -32,13 +32,22 @@ def export_to_csv(analysis_results):
             "suspicious_keywords",
             "risk_level",
             "risk_score",
-            "reasons"
+            "reasons",
+            "mitre_attack"
         ]
 
         writer = csv.DictWriter(file, fieldnames=fieldnames)
         writer.writeheader()
 
         for result in analysis_results:
+            mitre_values = []
+
+            for technique in result.get("mitre_attack", []):
+                mitre_values.append(
+                    f"{technique.get('technique_id')} - {technique.get('technique_name')} "
+                    f"({technique.get('tactic')})"
+                )
+
             writer.writerow({
                 "timestamp": result.get("timestamp", ""),
                 "batch_item": result.get("batch_item", ""),
@@ -51,7 +60,8 @@ def export_to_csv(analysis_results):
                 "suspicious_keywords": ", ".join(result.get("suspicious_keywords", [])),
                 "risk_level": result.get("risk_level", ""),
                 "risk_score": result.get("risk_score", ""),
-                "reasons": " | ".join(result.get("reasons", []))
+                "reasons": " | ".join(result.get("reasons", [])),
+                "mitre_attack": " | ".join(mitre_values)
             })
 
     return file_path
