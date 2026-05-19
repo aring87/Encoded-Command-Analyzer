@@ -159,7 +159,9 @@ def decode_hex(encoded_text):
         decoded_bytes = bytes.fromhex(cleaned_text)
         decoded_text = decoded_bytes.decode("utf-8", errors="ignore")
 
-        if looks_readable(decoded_text):
+        lowered_text = decoded_text.lower()
+
+        if any(hint in lowered_text for hint in SUSPICIOUS_HINTS):
             return [{
                 "encoding": "Hex",
                 "decoded_text": decoded_text
@@ -170,6 +172,88 @@ def decode_hex(encoded_text):
     except Exception:
         return []
 
+def decode_xor_hex(encoded_text):
+    try:
+        cleaned_text = encoded_text.strip().replace(" ", "").replace("0x", "")
+
+        if len(cleaned_text) % 2 != 0:
+            return []
+
+        if not all(character in "0123456789abcdefABCDEF" for character in cleaned_text):
+            return []
+
+        encoded_bytes = bytes.fromhex(cleaned_text)
+        candidates = []
+
+        for key in range(1, 256):
+            decoded_bytes = bytes(byte ^ key for byte in encoded_bytes)
+            decoded_text = decoded_bytes.decode("utf-8", errors="ignore")
+            lowered_text = decoded_text.lower()
+
+            matched_hints = []
+
+            for hint in SUSPICIOUS_HINTS:
+                if hint in lowered_text:
+                    matched_hints.append(hint)
+
+            if not matched_hints:
+                continue
+
+            if not looks_readable(decoded_text):
+                continue
+
+            confidence_score = 0
+
+            if "powershell" in lowered_text:
+                confidence_score += 5
+
+            if "powershell.exe" in lowered_text:
+                confidence_score += 5
+
+            if "-enc" in lowered_text or "-encodedcommand" in lowered_text:
+                confidence_score += 4
+
+            if "iex" in lowered_text:
+                confidence_score += 3
+
+            if "cmd.exe" in lowered_text:
+                confidence_score += 3
+
+            if "http" in lowered_text or "https" in lowered_text:
+                confidence_score += 2
+
+            # Penalize weird control characters or unreadable output
+            weird_characters = 0
+
+            for character in decoded_text:
+                if not character.isprintable() and character not in "\r\n\t":
+                    weird_characters += 1
+
+            confidence_score -= weird_characters * 2
+
+            if confidence_score >= 7:
+                candidates.append({
+                    "encoding": f"XOR Hex Key 0x{key:02X}",
+                    "decoded_text": decoded_text,
+                    "confidence_score": confidence_score
+                })
+
+        if not candidates:
+            return []
+
+        highest_score = max(candidate["confidence_score"] for candidate in candidates)
+
+        best_candidates = []
+
+        for candidate in candidates:
+            if candidate["confidence_score"] == highest_score:
+                candidate.pop("confidence_score", None)
+                best_candidates.append(candidate)
+
+        return best_candidates
+
+    except Exception:
+        return []
 
 def decode_once(encoded_text):
     decoded_results = []
@@ -178,6 +262,7 @@ def decode_once(encoded_text):
     decoded_results.extend(decode_compressed_base64(encoded_text))
     decoded_results.extend(decode_url(encoded_text))
     decoded_results.extend(decode_hex(encoded_text))
+    decoded_results.extend(decode_xor_hex(encoded_text))
 
     return decoded_results
 
@@ -227,7 +312,7 @@ def decode_input(encoded_text, max_depth=3):
         all_results.append({
             "encoding": "Unknown",
             "decode_level": 0,
-            "decoded_text": "Unable to decode input as Base64, PowerShell UTF-16LE, Gzip Base64, Deflate Base64, URL encoding, or Hex."
+            "decoded_text": "Unable to decode input as Base64, PowerShell UTF-16LE, Gzip Base64, Deflate Base64, URL encoding, Hex, or XOR Hex."
         })
 
     return all_results
