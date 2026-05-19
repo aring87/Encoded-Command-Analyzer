@@ -75,6 +75,33 @@ def decode_url(encoded_text):
             "encoding": "Error",
             "decoded_text": f"Error decoding URL encoding: {error}"
         }]
+        
+def decode_hex(encoded_text):
+    try:
+        cleaned_text = encoded_text.strip().replace(" ", "").replace("0x", "")
+
+        if len(cleaned_text) % 2 != 0:
+            return []
+
+        if not all(character in "0123456789abcdefABCDEF" for character in cleaned_text):
+            return []
+
+        decoded_bytes = bytes.fromhex(cleaned_text)
+        decoded_text = decoded_bytes.decode("utf-8", errors="ignore")
+
+        if decoded_text.strip():
+            return [{
+                "encoding": "Hex",
+                "decoded_text": decoded_text
+            }]
+
+        return []
+
+    except Exception as error:
+        return [{
+            "encoding": "Error",
+            "decoded_text": f"Error decoding Hex: {error}"
+        }]
 
 def decode_input(encoded_text):
     decoded_results = []
@@ -91,10 +118,16 @@ def decode_input(encoded_text):
         if result["encoding"] != "Error":
             decoded_results.append(result)
 
+    hex_results = decode_hex(encoded_text)
+
+    for result in hex_results:
+        if result["encoding"] != "Error":
+            decoded_results.append(result)
+
     if not decoded_results:
         decoded_results.append({
             "encoding": "Unknown",
-            "decoded_text": "Unable to decode input as Base64, PowerShell UTF-16LE, or URL encoding."
+            "decoded_text": "Unable to decode input as Base64, PowerShell UTF-16LE, URL encoding, or Hex."
         })
 
     return decoded_results
