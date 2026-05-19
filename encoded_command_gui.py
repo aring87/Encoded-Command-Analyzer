@@ -3,7 +3,7 @@ from tkinter import filedialog, messagebox, scrolledtext
 
 from decoder_engine import decode_input
 from detection_engine import analyze_decoded_result
-from report_exporter import export_to_csv, export_to_json, export_to_markdown
+from report_exporter import export_to_csv, export_to_json, export_to_markdown, export_to_html
 
 
 class EncodedCommandAnalyzerGUI:
@@ -337,10 +337,11 @@ class EncodedCommandAnalyzerGUI:
             json_path = export_to_json(self.analysis_results)
             csv_path = export_to_csv(self.analysis_results)
             markdown_path = export_to_markdown(self.analysis_results)
+            html_path = export_to_html(self.analysis_results)
 
             messagebox.showinfo(
                 "Export Complete",
-                f"Results exported successfully:\n\n{json_path}\n{csv_path}\n{markdown_path}"
+                f"Results exported successfully:\n\n{json_path}\n{csv_path}\n{markdown_path}\n{html_path}"
             )
 
         except Exception as error:

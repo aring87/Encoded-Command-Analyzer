@@ -4,7 +4,7 @@ import sys
 
 from decoder_engine import decode_input
 from detection_engine import analyze_decoded_result
-from report_exporter import export_to_csv, export_to_json, export_to_markdown
+from report_exporter import export_to_csv, export_to_json, export_to_markdown, export_to_html
 
 
 def print_analysis_result(analysis):
@@ -162,11 +162,13 @@ def export_results(analysis_results):
     json_path = export_to_json(analysis_results)
     csv_path = export_to_csv(analysis_results)
     markdown_path = export_to_markdown(analysis_results)
+    html_path = export_to_html(analysis_results)
 
     print("\nExport Complete:")
     print(f"- JSON:     {json_path}")
     print(f"- CSV:      {csv_path}")
     print(f"- Markdown: {markdown_path}")
+    print(f"- HTML:     {html_path}")
 
 
 def launch_gui():

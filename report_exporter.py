@@ -183,3 +183,265 @@ def export_to_markdown(analysis_results):
             file.write("\n---\n\n")
 
     return file_path
+    
+def export_to_html(analysis_results):
+    os.makedirs("output", exist_ok=True)
+
+    file_path = "output/triage_report.html"
+
+    highest_score = 0
+    highest_risk = "None"
+
+    for result in analysis_results:
+        score = result.get("risk_score", 0)
+
+        if score > highest_score:
+            highest_score = score
+            highest_risk = result.get("risk_level", "None")
+
+    def escape_html(value):
+        return (
+            str(value)
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+        )
+
+    with open(file_path, "w", encoding="utf-8") as file:
+        file.write("""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Encoded Command Analyzer Triage Report</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #0f172a;
+            color: #e5e7eb;
+            margin: 0;
+            padding: 30px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        h1 {
+            color: #ffffff;
+            border-bottom: 2px solid #334155;
+            padding-bottom: 10px;
+        }
+
+        h2 {
+            color: #93c5fd;
+            margin-top: 30px;
+        }
+
+        h3 {
+            color: #c4b5fd;
+            margin-top: 20px;
+        }
+
+        .summary {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .finding {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .risk-high {
+            color: #fecaca;
+            background-color: #7f1d1d;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+
+        .risk-medium {
+            color: #fed7aa;
+            background-color: #7c2d12;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+
+        .risk-low {
+            color: #fef3c7;
+            background-color: #713f12;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+
+        .risk-none {
+            color: #bbf7d0;
+            background-color: #14532d;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+
+        pre {
+            background-color: #020617;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 12px;
+            overflow-x: auto;
+            color: #d1d5db;
+        }
+
+        ul {
+            line-height: 1.6;
+        }
+
+        .metadata {
+            color: #cbd5e1;
+        }
+
+        .section {
+            margin-top: 18px;
+        }
+
+        .rule-card {
+            background-color: #0f172a;
+            border: 1px solid #475569;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+
+        .muted {
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+""")
+
+        file.write("<h1>Encoded Command Analyzer Triage Report</h1>\n")
+
+        risk_class = f"risk-{highest_risk.lower()}"
+
+        file.write('<div class="summary">\n')
+        file.write("<h2>Summary</h2>\n")
+        file.write(f"<p><strong>Total Results:</strong> {len(analysis_results)}</p>\n")
+        file.write(f'<p><strong>Highest Risk:</strong> <span class="{risk_class}">{escape_html(highest_risk)}</span></p>\n')
+        file.write(f"<p><strong>Highest Score:</strong> {highest_score}</p>\n")
+        file.write("</div>\n")
+
+        for index, result in enumerate(analysis_results, start=1):
+            risk_level = result.get("risk_level", "None")
+            risk_class = f"risk-{risk_level.lower()}"
+
+            file.write('<div class="finding">\n')
+            file.write(f"<h2>Finding {index}</h2>\n")
+
+            file.write('<div class="section metadata">\n')
+            file.write("<h3>Metadata</h3>\n")
+            file.write("<ul>\n")
+            file.write(f"<li><strong>Timestamp:</strong> {escape_html(result.get('timestamp', ''))}</li>\n")
+            file.write(f"<li><strong>Encoding:</strong> {escape_html(result.get('encoding', ''))}</li>\n")
+            file.write(f"<li><strong>Decode Level:</strong> {escape_html(result.get('decode_level', ''))}</li>\n")
+            file.write(f"<li><strong>Source Encoding:</strong> {escape_html(result.get('source_encoding', ''))}</li>\n")
+            file.write(f"<li><strong>Batch Item:</strong> {escape_html(result.get('batch_item', ''))}</li>\n")
+            file.write(f"<li><strong>Source File:</strong> {escape_html(result.get('source_file', ''))}</li>\n")
+            file.write("</ul>\n")
+            file.write("</div>\n")
+
+            file.write('<div class="section">\n')
+            file.write("<h3>Original Input</h3>\n")
+            file.write(f"<pre>{escape_html(result.get('original_input', ''))}</pre>\n")
+            file.write("</div>\n")
+
+            file.write('<div class="section">\n')
+            file.write("<h3>Decoded Output</h3>\n")
+            file.write(f"<pre>{escape_html(result.get('decoded_text', ''))}</pre>\n")
+            file.write("</div>\n")
+
+            file.write('<div class="section">\n')
+            file.write("<h3>Suspicious Keywords</h3>\n")
+            suspicious_keywords = result.get("suspicious_keywords", [])
+
+            if suspicious_keywords:
+                file.write("<ul>\n")
+                for keyword in suspicious_keywords:
+                    file.write(f"<li>{escape_html(keyword)}</li>\n")
+                file.write("</ul>\n")
+            else:
+                file.write('<p class="muted">No suspicious keywords found.</p>\n')
+            file.write("</div>\n")
+
+            file.write('<div class="section">\n')
+            file.write("<h3>Risk Score</h3>\n")
+            file.write(f'<p><strong>Risk Level:</strong> <span class="{risk_class}">{escape_html(risk_level)}</span></p>\n')
+            file.write(f"<p><strong>Score:</strong> {escape_html(result.get('risk_score', 0))}</p>\n")
+            file.write("</div>\n")
+
+            file.write('<div class="section">\n')
+            file.write("<h3>Risk Reasons</h3>\n")
+            reasons = result.get("reasons", [])
+
+            if reasons:
+                file.write("<ul>\n")
+                for reason in reasons:
+                    file.write(f"<li>{escape_html(reason)}</li>\n")
+                file.write("</ul>\n")
+            else:
+                file.write('<p class="muted">No risk reasons generated.</p>\n')
+            file.write("</div>\n")
+
+            file.write('<div class="section">\n')
+            file.write("<h3>MITRE ATT&CK Mapping</h3>\n")
+            mitre_attack = result.get("mitre_attack", [])
+
+            if mitre_attack:
+                file.write("<ul>\n")
+                for technique in mitre_attack:
+                    file.write(
+                        f"<li><strong>{escape_html(technique.get('technique_id'))} - "
+                        f"{escape_html(technique.get('technique_name'))}</strong> "
+                        f"({escape_html(technique.get('tactic'))})<br>"
+                        f"<span class='muted'>Reason: {escape_html(technique.get('reason'))}</span></li>\n"
+                    )
+                file.write("</ul>\n")
+            else:
+                file.write('<p class="muted">No MITRE ATT&CK mappings identified.</p>\n')
+            file.write("</div>\n")
+
+            file.write('<div class="section">\n')
+            file.write("<h3>Detection Rule Mapping</h3>\n")
+            detection_rules = result.get("detection_rules", [])
+
+            if detection_rules:
+                for rule in detection_rules:
+                    file.write('<div class="rule-card">\n')
+                    file.write(f"<strong>{escape_html(rule.get('rule_name'))}</strong><br>\n")
+                    file.write(f"<span class='muted'>Severity:</span> {escape_html(rule.get('severity'))}<br>\n")
+                    file.write(f"<span class='muted'>Description:</span> {escape_html(rule.get('description'))}<br>\n")
+                    file.write(f"<span class='muted'>Log Sources:</span> {escape_html(', '.join(rule.get('log_sources', [])))}<br>\n")
+                    file.write(f"<span class='muted'>Reason:</span> {escape_html(rule.get('reason'))}\n")
+                    file.write("</div>\n")
+            else:
+                file.write('<p class="muted">No detection rule mappings identified.</p>\n')
+            file.write("</div>\n")
+
+            file.write("</div>\n")
+
+        file.write("""
+</div>
+</body>
+</html>
+""")
+
+    return file_path
