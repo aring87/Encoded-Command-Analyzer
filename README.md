@@ -4,29 +4,37 @@
 ![License: MIT](https://img.shields.io/badge/License-MIT-green)
 ![Status](https://img.shields.io/badge/Status-Active-brightgreen)
 ![Project Type](https://img.shields.io/badge/Project-Detection%20Engineering-red)
+![Interface](https://img.shields.io/badge/Interface-CLI%20%7C%20GUI-purple)
 ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
-Encoded Command Analyzer is a Python-based detection engineering utility for decoding and analyzing encoded command-line content. The tool is designed to help security analysts and detection engineers triage suspicious commands, identify signs of PowerShell abuse, and produce analyst-friendly output.
+## Overview
 
-The project started as a simple Base64 decoder and is being expanded into a lightweight encoded command analysis tool.
+**Encoded Command Analyzer** is a Python-based detection engineering utility for decoding and analyzing encoded command-line content.
+
+The tool is designed to help security analysts and detection engineers triage suspicious commands, identify signs of PowerShell abuse, detect common obfuscation patterns, and produce analyst-friendly output for investigations.
+
+This project started as a simple Base64 decoder and has been expanded into a lightweight encoded command analysis tool with CLI support, GUI support, chained decoding, suspicious keyword detection, risk scoring, and JSON/CSV exports.
 
 ---
 
 ## Current Version
 
-**Version 5**
+**Version 11**
 
----
-
-## Features
+### Current Capabilities
 
 - Decode standard Base64 strings
-- Decode PowerShell UTF-16LE encoded commands
-- Identify suspicious keywords commonly seen in suspicious command-line activity
-- Assign a risk level based on detected keywords
+- Decode PowerShell UTF-16LE EncodedCommand values
+- Decode URL-encoded strings
+- Decode Hex-encoded strings
+- Decode chained encoding patterns
+- Identify suspicious command-line keywords
+- Assign a risk level based on detected indicators
 - Explain why a command may be suspicious
 - Export analysis results to JSON
 - Export analysis results to CSV
+- Provide both CLI and Tkinter GUI interfaces
+- Display a GUI risk banner for quick analyst review
 
 ---
 
@@ -38,11 +46,12 @@ Encoded and obfuscated commands are commonly seen during security investigations
 - EncodedCommand abuse
 - Script-based payload delivery
 - Command-line obfuscation
-- Initial access and execution activity
-- Malware triage
+- Malware staging
+- Initial access activity
+- Execution and defense evasion activity
 - SIEM and EDR alert investigation
 
-This tool provides a simple way to decode encoded content and quickly review suspicious indicators.
+This tool provides a simple way to decode suspicious content and quickly review indicators that may be useful during triage.
 
 ---
 
@@ -52,16 +61,18 @@ This tool provides a simple way to decode encoded content and quickly review sus
 |---|---|
 | Base64 UTF-8 | Supported |
 | PowerShell UTF-16LE Base64 | Supported |
-| URL Encoding | Planned |
-| Hex Encoding | Planned |
+| URL Encoding | Supported |
+| Hex Encoding | Supported |
+| Chained Encoding | Supported |
 | Gzip/Deflate Base64 | Planned |
 | XOR Obfuscation | Planned |
+| Batch File Analysis | Planned |
 
 ---
 
 ## Suspicious Keyword Detection
 
-The tool checks decoded content for suspicious keywords such as:
+The tool checks decoded content for suspicious or investigation-relevant keywords such as:
 
 ```text
 powershell
@@ -94,7 +105,7 @@ The tool assigns a risk level based on suspicious keyword matches.
 | Risk Level | Meaning |
 |---|---|
 | None | No suspicious keywords found |
-| Low | Minor suspicious indicators or useful context |
+| Low | Minor suspicious indicators or useful investigation context |
 | Medium | Suspicious command-line or PowerShell behavior |
 | High | Strong indicators of obfuscation, script execution, or payload activity |
 
@@ -108,12 +119,39 @@ This may be scored as **High** because it contains PowerShell execution, encoded
 
 ---
 
+## GUI Interface
+
+The project includes a Tkinter-based GUI that allows analysts to:
+
+- Paste encoded command content
+- Analyze the input
+- Review decoded output
+- Review suspicious keyword matches
+- View risk score and reasons
+- Export results to JSON and CSV
+- Clear and rerun analysis
+
+The GUI includes a color-coded risk banner:
+
+| Risk Level | Banner Meaning |
+|---|---|
+| High | Strong suspicious indicators detected |
+| Medium | Suspicious behavior detected |
+| Low | Minor indicators detected |
+| None | No suspicious keywords detected |
+
+---
+
 ## Project Structure
 
 ```text
 encoded-command-analyzer/
 │
 ├── base64_decoder.py
+├── encoded_command_gui.py
+├── decoder_engine.py
+├── detection_engine.py
+├── report_exporter.py
 ├── output/
 │   ├── analysis_result.json
 │   └── analysis_result.csv
@@ -121,6 +159,17 @@ encoded-command-analyzer/
 ├── LICENSE
 └── .gitignore
 ```
+
+### File Purpose
+
+| File | Purpose |
+|---|---|
+| `base64_decoder.py` | CLI entry point |
+| `encoded_command_gui.py` | Tkinter GUI entry point |
+| `decoder_engine.py` | Decoding logic for Base64, UTF-16LE, URL, Hex, and chained decoding |
+| `detection_engine.py` | Suspicious keyword detection, scoring, and analysis logic |
+| `report_exporter.py` | JSON and CSV export functions |
+| `output/` | Stores exported analysis results |
 
 ---
 
@@ -140,13 +189,27 @@ Python 3.x
 
 ## Usage
 
-Run the script from the project folder:
+### Run the CLI Version
+
+From the project folder:
 
 ```powershell
 python base64_decoder.py
 ```
 
-Paste a Base64 string when prompted.
+Paste an encoded string when prompted.
+
+---
+
+### Run the GUI Version
+
+From the project folder:
+
+```powershell
+python encoded_command_gui.py
+```
+
+Paste an encoded string into the input box and click **Analyze**.
 
 ---
 
@@ -197,35 +260,97 @@ Suspicious keywords found:
 - iex
 
 Risk Level: High
+Score: 7
+```
+
+---
+
+## Example: URL-Encoded Input
+
+Input:
+
+```text
+powershell%2Eexe%20-enc%20IEX
+```
+
+Decoded output:
+
+```text
+powershell.exe -enc IEX
+```
+
+Example result:
+
+```text
+Risk Level: High
+```
+
+---
+
+## Example: Hex-Encoded Input
+
+Input:
+
+```text
+706f7765727368656c6c2e657865202d656e6320494558
+```
+
+Decoded output:
+
+```text
+powershell.exe -enc IEX
+```
+
+Example result:
+
+```text
+Risk Level: High
+```
+
+---
+
+## Example: Chained Encoding
+
+Input:
+
+```text
+cG93ZXJzaGVsbCUyRWV4ZSUyMC1lbmMlMjBJRVg=
+```
+
+Decode flow:
+
+```text
+Level 1: Base64 UTF-8
+powershell%2Eexe%20-enc%20IEX
+
+Level 2: URL
+powershell.exe -enc IEX
+```
+
+Example final result:
+
+```text
+Risk Level: High
+Score: 7
 ```
 
 ---
 
 ## Exporting Results
 
-After analysis, the tool asks:
-
-```text
-Export results to JSON and CSV? y/n:
-```
-
-If you choose:
-
-```text
-y
-```
-
-The tool creates:
+After analysis, the tool can export results to:
 
 ```text
 output/analysis_result.json
 output/analysis_result.csv
 ```
 
-These files contain:
+Exported fields include:
 
 - Timestamp
 - Detected encoding
+- Decode level
+- Source encoding
 - Decoded text
 - Suspicious keywords
 - Risk level
@@ -234,20 +359,19 @@ These files contain:
 
 ---
 
-## Roadmap
+## Analyst Workflow
 
-Planned upgrades:
-
-- Version 6: GUI using Tkinter
-- Version 7: URL decoding support
-- Version 8: Hex decoding support
-- Version 9: Auto-detect encoding type
-- Version 10: Decode chained encodings
-- Version 11: Add command-line arguments
-- Version 12: Add batch file analysis
-- Version 13: Add detection rule mapping
-- Version 14: Add MITRE ATT&CK technique mapping
-- Version 15: Generate analyst triage reports
+```text
+1. Copy suspicious encoded command from an alert.
+2. Open Encoded Command Analyzer.
+3. Paste the encoded value.
+4. Run analysis.
+5. Review decoded output.
+6. Review suspicious keyword matches.
+7. Review risk score and reasons.
+8. Export results to JSON or CSV.
+9. Attach output to triage notes or investigation documentation.
+```
 
 ---
 
@@ -262,21 +386,8 @@ This project can support:
 - Detection engineering testing
 - SIEM rule validation
 - Suspicious command-line review
-
----
-
-## Example Analyst Workflow
-
-```text
-1. Copy suspicious encoded command from an alert.
-2. Run Encoded Command Analyzer.
-3. Paste the encoded value.
-4. Review decoded output.
-5. Review suspicious keyword matches.
-6. Review risk score and reasons.
-7. Export results to JSON or CSV.
-8. Attach output to triage notes or investigation documentation.
-```
+- Investigation enrichment
+- Portfolio demonstration for detection engineering roles
 
 ---
 
@@ -292,6 +403,22 @@ This project is designed for defensive security use cases, including:
 - Analyst training
 
 It is not intended to execute decoded content.
+
+---
+
+## Roadmap
+
+Planned upgrades:
+
+- Version 12: Batch file analysis
+- Version 13: Add command-line arguments
+- Version 14: Add MITRE ATT&CK technique mapping
+- Version 15: Add detection rule mapping
+- Version 16: Generate analyst triage reports
+- Version 17: Add Gzip/Deflate Base64 support
+- Version 18: Add XOR decode helper
+- Version 19: Add unit tests
+- Version 20: Package as an executable
 
 ---
 
