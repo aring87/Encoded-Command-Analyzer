@@ -9,6 +9,7 @@
 ![Exports](https://img.shields.io/badge/Exports-JSON%20%7C%20CSV%20%7C%20Markdown-yellow)
 ![Decoding](https://img.shields.io/badge/Decoding-Base64%20%7C%20URL%20%7C%20Hex%20%7C%20XOR-blueviolet)
 ![Testing](https://img.shields.io/badge/Testing-Unittest-brightgreen)
+![Packaging](https://img.shields.io/badge/Packaging-PyInstaller-lightgrey)
 ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
 ## Overview
@@ -17,13 +18,13 @@
 
 The tool is designed to help security analysts and detection engineers triage suspicious commands, identify signs of PowerShell abuse, detect common obfuscation patterns, map findings to MITRE ATT&CK techniques, and produce analyst-friendly output for investigations.
 
-This project started as a simple Base64 decoder and has expanded into a lightweight encoded command analysis tool with CLI support, GUI support, batch file analysis, chained decoding, compressed Base64 support, XOR Hex decoding, suspicious keyword detection, risk scoring, MITRE ATT&CK mapping, analyst-ready exports, and unit testing.
+This project started as a simple Base64 decoder and has expanded into a lightweight encoded command analysis tool with CLI support, GUI support, batch file analysis, chained decoding, compressed Base64 support, XOR Hex decoding, suspicious keyword detection, risk scoring, MITRE ATT&CK mapping, analyst-ready exports, unit testing, and Windows executable packaging.
 
 ---
 
 ## Current Version
 
-**Version 18**
+**Version 19**
 
 ### Current Capabilities
 
@@ -52,6 +53,9 @@ This project started as a simple Base64 decoder and has expanded into a lightwei
 - Unit tests for detection logic
 - Unit tests for risk scoring
 - Unit tests for MITRE ATT&CK mapping
+- Package the Tkinter GUI as a Windows executable
+- Run the GUI without launching Python manually
+- Distribute the executable through GitHub Releases
 
 ---
 
@@ -168,9 +172,9 @@ This may be scored as **High** because it contains PowerShell execution, encoded
 
 ## XOR Hex Decoding
 
-Version 17 added single-byte XOR Hex decoding support.
+The tool supports single-byte XOR Hex decoding.
 
-The tool can brute-force possible XOR keys, score decoded candidates, and return the highest-confidence result.
+It can brute-force possible XOR keys, score decoded candidates, and return the highest-confidence result.
 
 Example XOR Hex input:
 
@@ -289,6 +293,8 @@ encoded-command-analyzer/
 └── .gitignore
 ```
 
+Build artifacts such as `build/`, `dist/`, and `*.spec` are intentionally excluded from source control.
+
 ### File Purpose
 
 | File | Purpose |
@@ -308,12 +314,18 @@ encoded-command-analyzer/
 
 This project currently uses Python standard libraries only.
 
-No external packages are required.
+No external packages are required for the analyzer itself.
 
 Tested with:
 
 ```text
 Python 3.x
+```
+
+For Windows executable packaging, PyInstaller is required:
+
+```powershell
+pip install pyinstaller
 ```
 
 ---
@@ -380,6 +392,48 @@ Or launch the GUI from the CLI:
 ```powershell
 python base64_decoder.py --gui
 ```
+
+---
+
+## Windows Executable Packaging
+
+Version 19 adds support for packaging the Tkinter GUI as a Windows executable using PyInstaller.
+
+Install PyInstaller:
+
+```powershell
+pip install pyinstaller
+```
+
+Build the executable:
+
+```powershell
+pyinstaller --onefile --windowed --name EncodedCommandAnalyzer encoded_command_gui.py
+```
+
+The executable will be created here:
+
+```text
+dist/EncodedCommandAnalyzer.exe
+```
+
+Run the executable:
+
+```powershell
+.\dist\EncodedCommandAnalyzer.exe
+```
+
+### Packaging Notes
+
+The following PyInstaller build artifacts are ignored by Git:
+
+```text
+build/
+dist/
+*.spec
+```
+
+The executable should not be committed directly to the repository. Use GitHub Releases to distribute packaged builds.
 
 ---
 
@@ -711,7 +765,6 @@ It is not intended to execute decoded content.
 
 Planned upgrades:
 
-- Version 19: Package as an executable
 - Version 20: Add detection rule mapping
 - Version 21: Add configurable keyword rules
 - Version 22: Add HTML report export
