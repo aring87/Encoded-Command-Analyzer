@@ -1,5 +1,6 @@
 import base64
 
+
 def decode_base64(encoded_text):
     try:
         decoded_bytes = base64.b64decode(encoded_text)
@@ -8,19 +9,23 @@ def decode_base64(encoded_text):
     except Exception as error:
         return f"Error decoding Base64: {error}"
 
+
 def check_suspicious_keywords(decoded_text):
     suspicious_keywords = [
         "powershell",
-        "invoke-expression",
+        "-enc",
+        "-encodedcommand",
         "iex",
+        "invoke-expression",
         "downloadstring",
         "frombase64string",
         "webclient",
-        "encodedcommand",
         "start-process",
         "cmd.exe",
         "http",
-        "https"
+        "https",
+        "bypass",
+        "hidden"
     ]
 
     found_keywords = []
@@ -31,9 +36,10 @@ def check_suspicious_keywords(decoded_text):
 
     return found_keywords
 
+
 def main():
     print("====================================")
-    print(" Base64 Decoder Detection App")
+    print(" Encoded Command Analyzer - Version 2")
     print("====================================")
 
     encoded_text = input("Paste Base64 string: ")
@@ -55,6 +61,7 @@ def main():
             print(f"- {keyword}")
     else:
         print("No suspicious keywords found.")
+
 
 if __name__ == "__main__":
     main()
