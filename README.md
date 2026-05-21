@@ -9,6 +9,7 @@
 ![Detection Mapping](https://img.shields.io/badge/Detection-Rule%20Mapping-red)
 ![Templates](https://img.shields.io/badge/Templates-Sigma%20%7C%20Sentinel-blue)
 ![Coverage](https://img.shields.io/badge/Coverage-Summary-success)
+![Branding](https://img.shields.io/badge/Reports-Custom%20Branding-blue)
 ![Configurable Rules](https://img.shields.io/badge/Rules-Configurable-blue)
 ![Case Context](https://img.shields.io/badge/Case-Context-informational)
 ![Exports](https://img.shields.io/badge/Exports-JSON%20%7C%20CSV%20%7C%20Markdown%20%7C%20HTML-yellow)
@@ -21,15 +22,15 @@
 
 **Encoded Command Analyzer** is a Python-based detection engineering utility for decoding and analyzing encoded command-line content.
 
-The tool is designed to help security analysts and detection engineers triage suspicious commands, identify signs of PowerShell abuse, detect common obfuscation patterns, map findings to MITRE ATT&CK techniques, suggest related detection rule ideas, generate starter Sigma and Microsoft Sentinel KQL templates, summarize detection coverage, and produce analyst-friendly investigation reports.
+The tool is designed to help security analysts and detection engineers triage suspicious commands, identify signs of PowerShell abuse, detect common obfuscation patterns, map findings to MITRE ATT&CK techniques, suggest related detection rule ideas, generate starter Sigma and Microsoft Sentinel KQL templates, summarize detection coverage, and produce analyst-friendly investigation reports with optional case context and custom report branding.
 
-This project started as a simple Base64 decoder and has expanded into a lightweight encoded command analysis tool with CLI support, GUI support, batch file analysis, chained decoding, compressed Base64 support, XOR Hex decoding, suspicious keyword detection, configurable keyword rules, risk scoring, MITRE ATT&CK mapping, detection rule mapping, detection template generation, detection coverage summaries, analyst-ready exports, unit testing, Windows executable packaging, HTML report generation, and optional case context enrichment through both CLI and GUI workflows.
+This project started as a simple Base64 decoder and has expanded into a lightweight encoded command analysis tool with CLI support, GUI support, batch file analysis, chained decoding, compressed Base64 support, XOR Hex decoding, suspicious keyword detection, configurable keyword rules, risk scoring, MITRE ATT&CK mapping, detection rule mapping, detection template generation, detection coverage summaries, analyst-ready exports, unit testing, Windows executable packaging, HTML report generation, optional case context enrichment, and custom report branding.
 
 ---
 
 ## Current Version
 
-**Version 26**
+**Version 27**
 
 ### Current Capabilities
 
@@ -62,6 +63,10 @@ This project started as a simple Base64 decoder and has expanded into a lightwei
 - Add optional case context from CLI arguments
 - Add optional case context directly from the GUI
 - Add optional analyst notes to exported reports
+- Add custom report titles to exported Markdown and HTML reports
+- Add organization, team, or lab name to exported reports
+- Add report classification or handling labels to exported reports
+- Generate branded analyst-ready reports for portfolio or SOC-style documentation
 - Export GUI-entered case context to JSON, CSV, Markdown, and HTML reports
 - Export analysis results to JSON
 - Export analysis results to CSV
@@ -145,9 +150,7 @@ python base64_decoder.py --input "cG93ZXJzaGVsbCUyRWV4ZSUyMC1lbmMlMjBJRVg=" --ex
 
 ### GUI Case Context
 
-Version 26 adds optional case context fields directly into the Tkinter GUI.
-
-The GUI now supports:
+The GUI supports:
 
 ```text
 Case ID
@@ -170,6 +173,42 @@ output/triage_report.html
 If the GUI fields are left blank, no case context is added.
 
 For public examples, use generic values such as `SOC Analyst` or `Analyst Name`.
+
+---
+
+## Custom Report Branding
+
+Version 27 adds custom report branding for exported Markdown and HTML reports.
+
+Report branding is optional. If no custom branding is provided, the reports use the default title:
+
+```text
+Encoded Command Analyzer Triage Report
+```
+
+Custom branding can include:
+
+| Field | CLI Argument | Purpose |
+|---|---|---|
+| Report Title | `--report-title` | Custom title for the exported report |
+| Organization | `--organization` | Organization, team, or lab name |
+| Classification | `--classification` | Handling label such as Internal Use Only |
+
+Example:
+
+```powershell
+python base64_decoder.py --input "cG93ZXJzaGVsbCUyRWV4ZSUyMC1lbmMlMjBJRVg=" --export --report-title "Encoded PowerShell Triage Report" --organization "Detection Engineering Lab" --classification "Internal Use Only"
+```
+
+The exported Markdown and HTML reports will show:
+
+```text
+Encoded PowerShell Triage Report
+Organization: Detection Engineering Lab
+Classification: Internal Use Only
+```
+
+This helps produce cleaner SOC-style reports, portfolio artifacts, and professional investigation documentation.
 
 ---
 
@@ -508,6 +547,12 @@ python base64_decoder.py --input "534c544651504b464f4f0d465b46030e464d40036a667b
 
 ```powershell
 python base64_decoder.py --input "cG93ZXJzaGVsbCUyRWV4ZSUyMC1lbmMlMjBJRVg=" --export --case-id "INC-1001" --analyst "SOC Analyst" --alert-source "Microsoft Defender" --hostname "WIN-TEST01" --username "test.user" --notes "Suspicious encoded PowerShell observed in process command line."
+```
+
+### Analyze with Custom Report Branding
+
+```powershell
+python base64_decoder.py --input "cG93ZXJzaGVsbCUyRWV4ZSUyMC1lbmMlMjBJRVg=" --export --report-title "Encoded PowerShell Triage Report" --organization "Detection Engineering Lab" --classification "Internal Use Only"
 ```
 
 ### Analyze a Batch File
@@ -988,6 +1033,9 @@ output/triage_report.html
 
 Exported fields include:
 
+- Report title
+- Organization
+- Classification
 - Timestamp
 - Case ID
 - Analyst
@@ -1017,6 +1065,9 @@ Exported fields include:
 
 The generated Markdown triage report includes:
 
+- Custom report title
+- Optional organization
+- Optional classification label
 - Summary
 - Optional case context
 - Detection coverage summary
@@ -1044,6 +1095,9 @@ output/triage_report.md
 
 The generated HTML report includes:
 
+- Custom report title
+- Optional report information card
+- Optional organization and classification label
 - Executive-style summary
 - Optional case context
 - Detection coverage summary
@@ -1080,16 +1134,17 @@ start output\triage_report.html
 2. Open Encoded Command Analyzer.
 3. Paste the encoded value or load a batch file.
 4. Add optional case context through CLI arguments or GUI fields when needed.
-5. Run analysis.
-6. Review decoded output.
-7. Review suspicious keyword matches.
-8. Review risk score and reasons.
-9. Review MITRE ATT&CK mappings.
-10. Review detection rule mappings.
-11. Review suggested Sigma or Sentinel detection templates.
-12. Review the detection coverage summary.
-13. Export results to JSON, CSV, Markdown, or HTML.
-14. Attach output to triage notes or investigation documentation.
+5. Add optional report branding when producing formal reports.
+6. Run analysis.
+7. Review decoded output.
+8. Review suspicious keyword matches.
+9. Review risk score and reasons.
+10. Review MITRE ATT&CK mappings.
+11. Review detection rule mappings.
+12. Review suggested Sigma or Sentinel detection templates.
+13. Review the detection coverage summary.
+14. Export results to JSON, CSV, Markdown, or HTML.
+15. Attach output to triage notes or investigation documentation.
 ```
 
 ---
@@ -1111,6 +1166,7 @@ This project can support:
 - Sigma rule drafting
 - Microsoft Sentinel KQL drafting
 - Detection coverage review
+- Branded report generation
 - Portfolio demonstration for detection engineering roles
 - Case documentation and analyst reporting
 
@@ -1136,10 +1192,10 @@ It is not intended to execute decoded content.
 
 Planned upgrades:
 
-- Version 27: Add report branding or custom headers
 - Version 28: Add external detection template files
 - Version 29: Add YAML-based detection template library
 - Version 30: Add saved GUI analyst profiles or default report settings
+- Version 31: Add GUI report branding fields
 
 ---
 
