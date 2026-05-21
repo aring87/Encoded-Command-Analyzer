@@ -1,0 +1,14 @@
+template_name: PowerShell EncodedCommand Execution
+template_type: Microsoft Sentinel KQL
+severity: High
+keywords:
+  - powershell
+  - pwsh
+  - -enc
+  - -encodedcommand
+description: Detects encoded PowerShell command execution in Microsoft Defender process telemetry.
+query: |
+  DeviceProcessEvents
+  | where FileName in~ ("powershell.exe", "pwsh.exe")
+  | where ProcessCommandLine has_any ("-enc", "-encodedcommand")
+  | project Timestamp, DeviceName, InitiatingProcessAccountName, FileName, ProcessCommandLine, InitiatingProcessFileName, ReportId

@@ -1,0 +1,38 @@
+template_name: Suspicious PowerShell EncodedCommand
+template_type: Sigma
+severity: High
+keywords:
+  - powershell
+  - pwsh
+  - -enc
+  - -encodedcommand
+description: Detects PowerShell execution using encoded command arguments.
+query: |
+  title: Suspicious PowerShell EncodedCommand
+  id: 00000000-0000-0000-0000-000000000029
+  status: experimental
+  description: Detects PowerShell execution using encoded command arguments.
+  author: Encoded Command Analyzer
+  date: 2026/05/21
+  tags:
+    - attack.execution
+    - attack.t1059.001
+    - attack.defense_evasion
+    - attack.t1027
+  logsource:
+    product: windows
+    category: process_creation
+  detection:
+    selection_img:
+      Image|endswith:
+        - '\powershell.exe'
+        - '\pwsh.exe'
+    selection_cmd:
+      CommandLine|contains:
+        - '-enc'
+        - '-encodedcommand'
+    condition: selection_img and selection_cmd
+  falsepositives:
+    - Administrative scripts
+    - Software deployment tools
+  level: high

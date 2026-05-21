@@ -1,0 +1,13 @@
+template_name: Command Shell Execution
+template_type: Microsoft Sentinel KQL
+severity: Medium
+keywords:
+  - cmd.exe
+  - /c
+  - whoami
+description: Detects command shell execution patterns that may appear in suspicious decoded payloads.
+query: |
+  DeviceProcessEvents
+  | where FileName =~ "cmd.exe"
+  | where ProcessCommandLine has_any ("/c", "whoami", "net user", "net group")
+  | project Timestamp, DeviceName, InitiatingProcessAccountName, FileName, ProcessCommandLine, InitiatingProcessFileName, ReportId

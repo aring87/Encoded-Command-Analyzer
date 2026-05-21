@@ -1,0 +1,12 @@
+template_name: PowerShell Invoke-Expression Usage
+template_type: Microsoft Sentinel KQL
+severity: Medium
+keywords:
+  - iex
+  - invoke-expression
+description: Detects PowerShell Invoke-Expression usage, commonly used in obfuscated execution chains.
+query: |
+  DeviceProcessEvents
+  | where FileName in~ ("powershell.exe", "pwsh.exe")
+  | where ProcessCommandLine has_any ("iex", "invoke-expression")
+  | project Timestamp, DeviceName, InitiatingProcessAccountName, FileName, ProcessCommandLine, InitiatingProcessFileName, ReportId

@@ -1,0 +1,14 @@
+template_name: PowerShell Download Cradle
+template_type: Microsoft Sentinel KQL
+severity: High
+keywords:
+  - downloadstring
+  - invoke-webrequest
+  - iwr
+  - webclient
+description: Detects PowerShell download cradle behavior commonly used to retrieve and execute remote payloads.
+query: |
+  DeviceProcessEvents
+  | where FileName in~ ("powershell.exe", "pwsh.exe")
+  | where ProcessCommandLine has_any ("downloadstring", "invoke-webrequest", "iwr", "webclient")
+  | project Timestamp, DeviceName, InitiatingProcessAccountName, FileName, ProcessCommandLine, InitiatingProcessFileName, ReportId

@@ -24,9 +24,9 @@
 
 ### Detection Templates
 
-- Sigma: Suspicious PowerShell EncodedCommand (High)
 - Microsoft Sentinel KQL: PowerShell EncodedCommand Execution (High)
 - Microsoft Sentinel KQL: PowerShell Invoke-Expression Usage (Medium)
+- Sigma: Suspicious PowerShell EncodedCommand (High)
 
 ---
 
@@ -34,7 +34,7 @@
 
 ### Metadata
 
-- Timestamp: 2026-05-21T19:05:37
+- Timestamp: 2026-05-21T19:28:55
 - Encoding: UTF-8
 - Decode Level: 1
 - Source Encoding: 
@@ -92,6 +92,32 @@ powershell%2Eexe%20-enc%20IEX
 
 ### Detection Templates
 
+- PowerShell EncodedCommand Execution
+  - Type: Microsoft Sentinel KQL
+  - Severity: High
+  - Description: Detects encoded PowerShell command execution in Microsoft Defender process telemetry.
+  - Query:
+
+```text
+DeviceProcessEvents
+| where FileName in~ ("powershell.exe", "pwsh.exe")
+| where ProcessCommandLine has_any ("-enc", "-encodedcommand")
+| project Timestamp, DeviceName, InitiatingProcessAccountName, FileName, ProcessCommandLine, InitiatingProcessFileName, ReportId
+```
+
+- PowerShell Invoke-Expression Usage
+  - Type: Microsoft Sentinel KQL
+  - Severity: Medium
+  - Description: Detects PowerShell Invoke-Expression usage, commonly used in obfuscated execution chains.
+  - Query:
+
+```text
+DeviceProcessEvents
+| where FileName in~ ("powershell.exe", "pwsh.exe")
+| where ProcessCommandLine has_any ("iex", "invoke-expression")
+| project Timestamp, DeviceName, InitiatingProcessAccountName, FileName, ProcessCommandLine, InitiatingProcessFileName, ReportId
+```
+
 - Suspicious PowerShell EncodedCommand
   - Type: Sigma
   - Severity: High
@@ -100,57 +126,33 @@ powershell%2Eexe%20-enc%20IEX
 
 ```text
 title: Suspicious PowerShell EncodedCommand
-id: 00000000-0000-0000-0000-000000000028
+id: 00000000-0000-0000-0000-000000000029
 status: experimental
 description: Detects PowerShell execution using encoded command arguments.
 author: Encoded Command Analyzer
-logsource:
-  product: windows
-  category: process_creation
-detection:
-  selection:
-    Image|endswith:
-      - '\\powershell.exe'
-      - '\\pwsh.exe'
-    CommandLine|contains:
-      - '-enc'
-      - '-encodedcommand'
-  condition: selection
-falsepositives:
-  - Administrative scripts
-  - Software deployment tools
-level: high
+date: 2026/05/21
 tags:
   - attack.execution
   - attack.t1059.001
   - attack.defense_evasion
   - attack.t1027
-```
-
-- PowerShell EncodedCommand Execution
-  - Type: Microsoft Sentinel KQL
-  - Severity: High
-  - Description: Detects PowerShell process executions containing encoded command arguments.
-  - Query:
-
-```text
-DeviceProcessEvents
-| where FileName in~ ("powershell.exe", "pwsh.exe")
-| where ProcessCommandLine has_any ("-enc", "-encodedcommand")
-| project Timestamp, DeviceName, InitiatingProcessAccountName, FileName, ProcessCommandLine, InitiatingProcessFileName, InitiatingProcessCommandLine
-```
-
-- PowerShell Invoke-Expression Usage
-  - Type: Microsoft Sentinel KQL
-  - Severity: Medium
-  - Description: Detects PowerShell command lines containing IEX or Invoke-Expression.
-  - Query:
-
-```text
-DeviceProcessEvents
-| where FileName in~ ("powershell.exe", "pwsh.exe")
-| where ProcessCommandLine has_any ("iex", "invoke-expression")
-| project Timestamp, DeviceName, InitiatingProcessAccountName, FileName, ProcessCommandLine, InitiatingProcessFileName, InitiatingProcessCommandLine
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection_img:
+    Image|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+  selection_cmd:
+    CommandLine|contains:
+      - '-enc'
+      - '-encodedcommand'
+  condition: selection_img and selection_cmd
+falsepositives:
+  - Administrative scripts
+  - Software deployment tools
+level: high
 ```
 
 
@@ -160,7 +162,7 @@ DeviceProcessEvents
 
 ### Metadata
 
-- Timestamp: 2026-05-21T19:05:37
+- Timestamp: 2026-05-21T19:28:55
 - Encoding: URL
 - Decode Level: 2
 - Source Encoding: UTF-8
@@ -218,6 +220,32 @@ powershell.exe -enc IEX
 
 ### Detection Templates
 
+- PowerShell EncodedCommand Execution
+  - Type: Microsoft Sentinel KQL
+  - Severity: High
+  - Description: Detects encoded PowerShell command execution in Microsoft Defender process telemetry.
+  - Query:
+
+```text
+DeviceProcessEvents
+| where FileName in~ ("powershell.exe", "pwsh.exe")
+| where ProcessCommandLine has_any ("-enc", "-encodedcommand")
+| project Timestamp, DeviceName, InitiatingProcessAccountName, FileName, ProcessCommandLine, InitiatingProcessFileName, ReportId
+```
+
+- PowerShell Invoke-Expression Usage
+  - Type: Microsoft Sentinel KQL
+  - Severity: Medium
+  - Description: Detects PowerShell Invoke-Expression usage, commonly used in obfuscated execution chains.
+  - Query:
+
+```text
+DeviceProcessEvents
+| where FileName in~ ("powershell.exe", "pwsh.exe")
+| where ProcessCommandLine has_any ("iex", "invoke-expression")
+| project Timestamp, DeviceName, InitiatingProcessAccountName, FileName, ProcessCommandLine, InitiatingProcessFileName, ReportId
+```
+
 - Suspicious PowerShell EncodedCommand
   - Type: Sigma
   - Severity: High
@@ -226,57 +254,33 @@ powershell.exe -enc IEX
 
 ```text
 title: Suspicious PowerShell EncodedCommand
-id: 00000000-0000-0000-0000-000000000028
+id: 00000000-0000-0000-0000-000000000029
 status: experimental
 description: Detects PowerShell execution using encoded command arguments.
 author: Encoded Command Analyzer
-logsource:
-  product: windows
-  category: process_creation
-detection:
-  selection:
-    Image|endswith:
-      - '\\powershell.exe'
-      - '\\pwsh.exe'
-    CommandLine|contains:
-      - '-enc'
-      - '-encodedcommand'
-  condition: selection
-falsepositives:
-  - Administrative scripts
-  - Software deployment tools
-level: high
+date: 2026/05/21
 tags:
   - attack.execution
   - attack.t1059.001
   - attack.defense_evasion
   - attack.t1027
-```
-
-- PowerShell EncodedCommand Execution
-  - Type: Microsoft Sentinel KQL
-  - Severity: High
-  - Description: Detects PowerShell process executions containing encoded command arguments.
-  - Query:
-
-```text
-DeviceProcessEvents
-| where FileName in~ ("powershell.exe", "pwsh.exe")
-| where ProcessCommandLine has_any ("-enc", "-encodedcommand")
-| project Timestamp, DeviceName, InitiatingProcessAccountName, FileName, ProcessCommandLine, InitiatingProcessFileName, InitiatingProcessCommandLine
-```
-
-- PowerShell Invoke-Expression Usage
-  - Type: Microsoft Sentinel KQL
-  - Severity: Medium
-  - Description: Detects PowerShell command lines containing IEX or Invoke-Expression.
-  - Query:
-
-```text
-DeviceProcessEvents
-| where FileName in~ ("powershell.exe", "pwsh.exe")
-| where ProcessCommandLine has_any ("iex", "invoke-expression")
-| project Timestamp, DeviceName, InitiatingProcessAccountName, FileName, ProcessCommandLine, InitiatingProcessFileName, InitiatingProcessCommandLine
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection_img:
+    Image|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+  selection_cmd:
+    CommandLine|contains:
+      - '-enc'
+      - '-encodedcommand'
+  condition: selection_img and selection_cmd
+falsepositives:
+  - Administrative scripts
+  - Software deployment tools
+level: high
 ```
 
 

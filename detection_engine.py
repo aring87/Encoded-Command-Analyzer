@@ -1,6 +1,7 @@
 import json
 import os
 from datetime import datetime
+from template_loader import match_yaml_detection_templates
 
 
 DEFAULT_KEYWORD_RULES = [
@@ -412,7 +413,7 @@ def analyze_decoded_result(result):
     risk_level, score, reasons = calculate_risk_score(found_keywords)
     mitre_mappings = map_mitre_attack(found_keywords)
     detection_rules = map_detection_rules(found_keywords)
-    detection_templates = map_detection_templates(found_keywords)
+    detection_templates = match_yaml_detection_templates(decoded_text)
 
     analysis = {
         "timestamp": datetime.now().isoformat(timespec="seconds"),
