@@ -8,6 +8,7 @@
 ![MITRE ATT&CK](https://img.shields.io/badge/MITRE-ATT%26CK-orange)
 ![Detection Mapping](https://img.shields.io/badge/Detection-Rule%20Mapping-red)
 ![Templates](https://img.shields.io/badge/Templates-Sigma%20%7C%20Sentinel-blue)
+![External Templates](https://img.shields.io/badge/Templates-External%20JSON-blue)
 ![Coverage](https://img.shields.io/badge/Coverage-Summary-success)
 ![Branding](https://img.shields.io/badge/Reports-Custom%20Branding-blue)
 ![Configurable Rules](https://img.shields.io/badge/Rules-Configurable-blue)
@@ -24,13 +25,13 @@
 
 The tool is designed to help security analysts and detection engineers triage suspicious commands, identify signs of PowerShell abuse, detect common obfuscation patterns, map findings to MITRE ATT&CK techniques, suggest related detection rule ideas, generate starter Sigma and Microsoft Sentinel KQL templates, summarize detection coverage, and produce analyst-friendly investigation reports with optional case context and custom report branding.
 
-This project started as a simple Base64 decoder and has expanded into a lightweight encoded command analysis tool with CLI support, GUI support, batch file analysis, chained decoding, compressed Base64 support, XOR Hex decoding, suspicious keyword detection, configurable keyword rules, risk scoring, MITRE ATT&CK mapping, detection rule mapping, detection template generation, detection coverage summaries, analyst-ready exports, unit testing, Windows executable packaging, HTML report generation, optional case context enrichment, and custom report branding.
+This project started as a simple Base64 decoder and has expanded into a lightweight encoded command analysis tool with CLI support, GUI support, batch file analysis, chained decoding, compressed Base64 support, XOR Hex decoding, suspicious keyword detection, configurable keyword rules, risk scoring, MITRE ATT&CK mapping, detection rule mapping, external detection template loading, detection coverage summaries, analyst-ready exports, unit testing, Windows executable packaging, HTML report generation, optional case context enrichment, and custom report branding.
 
 ---
 
 ## Current Version
 
-**Version 27**
+**Version 28**
 
 ### Current Capabilities
 
@@ -56,6 +57,10 @@ This project started as a simple Base64 decoder and has expanded into a lightwei
 - Identify possible log sources for detection engineering
 - Generate starter Sigma detection templates
 - Generate starter Microsoft Sentinel KQL detection templates
+- Load detection templates from an external JSON config file
+- Manage Sigma and Microsoft Sentinel KQL templates without editing Python code
+- Add or modify detection templates through `config/detection_templates.json`
+- Use external template matching based on suspicious keyword indicators
 - Generate a detection coverage summary
 - Summarize MITRE ATT&CK techniques across all decoded results
 - Summarize detection rule ideas across all decoded results
@@ -178,7 +183,7 @@ For public examples, use generic values such as `SOC Analyst` or `Analyst Name`.
 
 ## Custom Report Branding
 
-Version 27 adds custom report branding for exported Markdown and HTML reports.
+The tool supports custom report branding for exported Markdown and HTML reports.
 
 Report branding is optional. If no custom branding is provided, the reports use the default title:
 
@@ -347,6 +352,60 @@ Detection templates may include:
 - Query or rule body
 
 These templates are intended as starting points and should be reviewed, tested, and tuned before production use.
+
+---
+
+## External Detection Template Files
+
+Version 28 adds support for external detection template files.
+
+Detection templates are now loaded from:
+
+```text
+config/detection_templates.json
+```
+
+This allows detection engineers to add, remove, or modify Sigma and Microsoft Sentinel KQL templates without editing the Python source code.
+
+Each template can include:
+
+| Field | Purpose |
+|---|---|
+| `template_name` | Name of the detection template |
+| `template_type` | Template type, such as Sigma or Microsoft Sentinel KQL |
+| `severity` | Suggested severity |
+| `keywords` | Keywords used to match decoded content to the template |
+| `description` | Description of what the template detects |
+| `query` | Sigma rule body or KQL query text |
+
+Example template:
+
+```json
+{
+  "template_name": "PowerShell Invoke-Expression Usage",
+  "template_type": "Microsoft Sentinel KQL",
+  "severity": "Medium",
+  "keywords": ["iex", "invoke-expression"],
+  "description": "Detects PowerShell command lines containing IEX or Invoke-Expression.",
+  "query": "DeviceProcessEvents\n| where FileName in~ (\"powershell.exe\", \"pwsh.exe\")\n| where ProcessCommandLine has_any (\"iex\", \"invoke-expression\")"
+}
+```
+
+If decoded content contains one of the configured keywords, the matching detection template is included in:
+
+```text
+CLI output
+output/analysis_result.json
+output/analysis_result.csv
+output/triage_report.md
+output/triage_report.html
+```
+
+Validate the JSON file with:
+
+```powershell
+python -m json.tool config\detection_templates.json
+```
 
 ---
 
@@ -586,7 +645,8 @@ encoded-command-analyzer/
 ├── detection_engine.py
 ├── report_exporter.py
 ├── config/
-│   └── keyword_rules.json
+│   ├── keyword_rules.json
+│   └── detection_templates.json
 ├── samples/
 │   └── sample_batch.txt
 ├── tests/
@@ -611,9 +671,10 @@ Build artifacts such as `build/`, `dist/`, and `*.spec` are intentionally exclud
 | `base64_decoder.py` | CLI entry point and command-line argument handler |
 | `encoded_command_gui.py` | Tkinter GUI entry point |
 | `decoder_engine.py` | Decoding logic for Base64, UTF-16LE, URL, Hex, chained decoding, compressed Base64, and XOR Hex |
-| `detection_engine.py` | Suspicious keyword detection, configurable keyword loading, risk scoring, analysis logic, MITRE ATT&CK mapping, detection rule mapping, and detection template mapping |
+| `detection_engine.py` | Suspicious keyword detection, configurable keyword loading, risk scoring, analysis logic, MITRE ATT&CK mapping, detection rule mapping, and detection template matching |
 | `report_exporter.py` | JSON, CSV, Markdown, and HTML export functions |
 | `config/keyword_rules.json` | Configurable suspicious keyword rules |
+| `config/detection_templates.json` | External Sigma and Microsoft Sentinel KQL detection templates |
 | `samples/` | Sample input files for testing |
 | `tests/` | Unit tests for decoder and detection logic |
 | `output/` | Stores exported analysis results and triage reports |
@@ -1165,6 +1226,7 @@ This project can support:
 - Detection rule development
 - Sigma rule drafting
 - Microsoft Sentinel KQL drafting
+- Detection template management
 - Detection coverage review
 - Branded report generation
 - Portfolio demonstration for detection engineering roles
@@ -1192,10 +1254,10 @@ It is not intended to execute decoded content.
 
 Planned upgrades:
 
-- Version 28: Add external detection template files
 - Version 29: Add YAML-based detection template library
 - Version 30: Add saved GUI analyst profiles or default report settings
 - Version 31: Add GUI report branding fields
+- Version 32: Add template validation checks
 
 ---
 
