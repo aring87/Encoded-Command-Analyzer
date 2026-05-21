@@ -154,7 +154,27 @@ def export_to_markdown(analysis_results):
             highest_risk = result.get("risk_level", "None")
 
     with open(file_path, "w", encoding="utf-8") as file:
-        file.write("# Encoded Command Analyzer Triage Report\n\n")
+        report_branding = {}
+
+        for result in analysis_results:
+            if result.get("report_branding"):
+                report_branding = result.get("report_branding", {})
+                break
+
+        report_title = report_branding.get(
+            "report_title",
+            "Encoded Command Analyzer Triage Report"
+        )
+
+        file.write(f"# {report_title}\n\n")
+
+        if report_branding.get("organization"):
+            file.write(f"**Organization:** {report_branding.get('organization')}\n\n")
+
+        if report_branding.get("classification"):
+            file.write(f"**Classification:** {report_branding.get('classification')}\n\n")
+
+        file.write("---\n\n")
 
         file.write("## Summary\n\n")
         file.write(f"- Total Results: {len(analysis_results)}\n")
@@ -460,7 +480,37 @@ def export_to_html(analysis_results):
 <div class="container">
 """)
 
-        file.write("<h1>Encoded Command Analyzer Triage Report</h1>\n")
+        report_branding = {}
+
+        for result in analysis_results:
+            if result.get("report_branding"):
+                report_branding = result.get("report_branding", {})
+                break
+
+        report_title = report_branding.get(
+            "report_title",
+            "Encoded Command Analyzer Triage Report"
+        )
+
+        file.write(f"<h1>{escape_html(report_title)}</h1>\n")
+
+        if report_branding.get("organization") or report_branding.get("classification"):
+            file.write('<div class="summary">\n')
+            file.write("<h2>Report Information</h2>\n")
+
+            if report_branding.get("organization"):
+                file.write(
+                    f"<p><strong>Organization:</strong> "
+                    f"{escape_html(report_branding.get('organization'))}</p>\n"
+                )
+
+            if report_branding.get("classification"):
+                file.write(
+                    f"<p><strong>Classification:</strong> "
+                    f"{escape_html(report_branding.get('classification'))}</p>\n"
+                )
+
+            file.write("</div>\n")
 
         risk_class = f"risk-{highest_risk.lower()}"
 

@@ -20,7 +20,10 @@ def print_analysis_result(analysis):
 
     if "batch_item" in analysis:
         print(f"Batch Item: {analysis.get('batch_item')}")
-        
+
+    if "source_file" in analysis:
+        print(f"Source File: {analysis.get('source_file')}")
+
     case_context = analysis.get("case_context", {})
 
     if case_context:
@@ -68,10 +71,13 @@ def print_analysis_result(analysis):
 
         for technique in mitre_attack:
             print(
-                f"- {technique.get('technique_id')} - {technique.get('technique_name')} "
+                f"- {technique.get('technique_id')} - "
+                f"{technique.get('technique_name')} "
                 f"({technique.get('tactic')})"
             )
-            print(f"  Reason: {technique.get('reason')}")
+
+            if technique.get("reason"):
+                print(f"  Reason: {technique.get('reason')}")
 
     detection_rules = analysis.get("detection_rules", [])
 
@@ -83,10 +89,19 @@ def print_analysis_result(analysis):
             print(f"- {rule.get('rule_name')}")
             print(f"  Severity: {rule.get('severity')}")
             print(f"  Description: {rule.get('description')}")
-            print(f"  Log Sources: {', '.join(rule.get('log_sources', []))}")
-            print(f"  Reason: {rule.get('reason')}")
-            
-        detection_templates = analysis.get("detection_templates", [])
+
+            log_sources = rule.get("log_sources", [])
+            if log_sources:
+                print(f"  Log Sources: {', '.join(log_sources)}")
+
+            if rule.get("reason"):
+                print(f"  Reason: {rule.get('reason')}")
+
+    # IMPORTANT:
+    # This must be outside the detection_rules block.
+    # Otherwise clean inputs with no detection rules can cause:
+    # UnboundLocalError: detection_templates referenced before assignment
+    detection_templates = analysis.get("detection_templates", [])
 
     if detection_templates:
         print("\nDetection Templates:")
@@ -156,6 +171,7 @@ def analyze_batch_file(file_path):
     except Exception as error:
         print(f"Error reading file: {error}")
         return []
+
 
 def print_detection_coverage_summary(analysis_results):
     mitre_techniques = {}
@@ -231,6 +247,7 @@ def print_detection_coverage_summary(analysis_results):
 
     print("====================================")
 
+
 def print_summary(analysis_results):
     if not analysis_results:
         print("No analysis results generated.")
@@ -239,12 +256,22 @@ def print_summary(analysis_results):
     highest_score = 0
     highest_risk = "None"
 
+    risk_order = {
+        "None": 0,
+        "Low": 1,
+        "Medium": 2,
+        "High": 3
+    }
+
     for result in analysis_results:
         score = result.get("risk_score", 0)
+        risk_level = result.get("risk_level", "None")
 
         if score > highest_score:
             highest_score = score
-            highest_risk = result.get("risk_level", "None")
+
+        if risk_order.get(risk_level, 0) > risk_order.get(highest_risk, 0):
+            highest_risk = risk_level
 
     print("====================================")
     print("Analysis Summary")
@@ -253,6 +280,7 @@ def print_summary(analysis_results):
     print(f"Highest Risk: {highest_risk}")
     print(f"Highest Score: {highest_score}")
     print("====================================")
+
 
 def apply_case_context(analysis_results, args):
     case_context = {
@@ -273,6 +301,21 @@ def apply_case_context(analysis_results, args):
         result["case_context"] = case_context
 
     return analysis_results
+
+
+def apply_report_branding(analysis_results, args):
+    report_branding = {
+        "report_title": args.report_title or "Encoded Command Analyzer Triage Report",
+        "organization": args.organization or "",
+        "classification": args.classification or ""
+    }
+
+    # Always attach branding so exported reports have a default title.
+    for result in analysis_results:
+        result["report_branding"] = report_branding
+
+    return analysis_results
+
 
 def export_results(analysis_results):
     if not analysis_results:
@@ -320,7 +363,7 @@ def build_parser():
     parser.add_argument(
         "--export",
         action="store_true",
-        help="Export analysis results to JSON and CSV."
+        help="Export analysis results to JSON, CSV, Markdown, and HTML."
     )
 
     parser.add_argument(
@@ -328,7 +371,7 @@ def build_parser():
         action="store_true",
         help="Launch the Tkinter GUI."
     )
-    
+
     parser.add_argument(
         "--case-id",
         help="Case or incident ID to include in exported reports."
@@ -358,6 +401,22 @@ def build_parser():
         "--notes",
         help="Analyst notes to include in exported reports."
     )
+
+    parser.add_argument(
+        "--report-title",
+        help="Custom report title to include in exported reports."
+    )
+
+    parser.add_argument(
+        "--organization",
+        help="Organization, team, or lab name to include in exported reports."
+    )
+
+    parser.add_argument(
+        "--classification",
+        help="Report classification or handling label, such as Internal Use Only."
+    )
+
     return parser
 
 
@@ -387,7 +446,12 @@ def main():
         parser.print_help()
         return
 
+    if not analysis_results:
+        print("No decodable results found.")
+        return
+
     analysis_results = apply_case_context(analysis_results, args)
+    analysis_results = apply_report_branding(analysis_results, args)
 
     for analysis in analysis_results:
         print_analysis_result(analysis)

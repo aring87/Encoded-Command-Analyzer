@@ -1,6 +1,6 @@
 [
     {
-        "timestamp": "2026-05-21T17:46:36",
+        "timestamp": "2026-05-21T18:33:55",
         "encoding": "UTF-8",
         "decoded_text": "powershell%2Eexe%20-enc%20IEX",
         "suspicious_keywords": [
@@ -85,17 +85,14 @@
         ],
         "decode_level": 1,
         "original_input": "cG93ZXJzaGVsbCUyRWV4ZSUyMC1lbmMlMjBJRVg=",
-        "case_context": {
-            "case_id": "INC-1001",
-            "analyst": "SOC Analyst",
-            "alert_source": "Microsoft Defender",
-            "hostname": "WIN-TEST01",
-            "username": "test.user",
-            "analyst_notes": "Suspicious encoded PowerShell observed in process command line."
+        "report_branding": {
+            "report_title": "Encoded PowerShell Triage Report",
+            "organization": "Detection Engineering Lab",
+            "classification": "Internal Use Only"
         }
     },
     {
-        "timestamp": "2026-05-21T17:46:36",
+        "timestamp": "2026-05-21T18:33:55",
         "encoding": "URL",
         "decoded_text": "powershell.exe -enc IEX",
         "suspicious_keywords": [
@@ -181,13 +178,10 @@
         "decode_level": 2,
         "source_encoding": "UTF-8",
         "original_input": "cG93ZXJzaGVsbCUyRWV4ZSUyMC1lbmMlMjBJRVg=",
-        "case_context": {
-            "case_id": "INC-1001",
-            "analyst": "SOC Analyst",
-            "alert_source": "Microsoft Defender",
-            "hostname": "WIN-TEST01",
-            "username": "test.user",
-            "analyst_notes": "Suspicious encoded PowerShell observed in process command line."
+        "report_branding": {
+            "report_title": "Encoded PowerShell Triage Report",
+            "organization": "Detection Engineering Lab",
+            "classification": "Internal Use Only"
         }
     }
 ]
