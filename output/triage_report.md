@@ -6,6 +6,15 @@
 - Highest Risk: High
 - Highest Score: 7
 
+## Case Context
+
+- Case ID: INC-1001
+- Analyst: SOC Analyst
+- Alert Source: Microsoft Defender
+- Hostname: WIN-TEST01
+- Username: test.user
+- Analyst Notes: Suspicious encoded PowerShell observed in process command line.
+
 ---
 
 ## Detection Coverage Summary
@@ -32,7 +41,7 @@
 
 ### Metadata
 
-- Timestamp: 2026-05-19T19:29:30
+- Timestamp: 2026-05-21T17:46:36
 - Encoding: UTF-8
 - Decode Level: 1
 - Source Encoding: 
@@ -158,7 +167,7 @@ DeviceProcessEvents
 
 ### Metadata
 
-- Timestamp: 2026-05-19T19:29:30
+- Timestamp: 2026-05-21T17:46:36
 - Encoding: URL
 - Decode Level: 2
 - Source Encoding: UTF-8

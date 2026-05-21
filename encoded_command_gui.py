@@ -26,6 +26,38 @@ class EncodedCommandAnalyzerGUI:
             fg="#e5e7eb"
         )
         title_label.pack(pady=(15, 5))
+        
+        case_frame = tk.LabelFrame(
+            self.root,
+            text="Optional Case Context",
+            padx=10,
+            pady=10
+        )
+        case_frame.pack(fill=tk.X, padx=10, pady=5)
+
+        tk.Label(case_frame, text="Case ID:").grid(row=0, column=0, sticky="w", padx=5, pady=3)
+        self.case_id_entry = tk.Entry(case_frame, width=30)
+        self.case_id_entry.grid(row=0, column=1, sticky="w", padx=5, pady=3)
+
+        tk.Label(case_frame, text="Analyst:").grid(row=0, column=2, sticky="w", padx=5, pady=3)
+        self.analyst_entry = tk.Entry(case_frame, width=30)
+        self.analyst_entry.grid(row=0, column=3, sticky="w", padx=5, pady=3)
+
+        tk.Label(case_frame, text="Alert Source:").grid(row=1, column=0, sticky="w", padx=5, pady=3)
+        self.alert_source_entry = tk.Entry(case_frame, width=30)
+        self.alert_source_entry.grid(row=1, column=1, sticky="w", padx=5, pady=3)
+
+        tk.Label(case_frame, text="Hostname:").grid(row=1, column=2, sticky="w", padx=5, pady=3)
+        self.hostname_entry = tk.Entry(case_frame, width=30)
+        self.hostname_entry.grid(row=1, column=3, sticky="w", padx=5, pady=3)
+
+        tk.Label(case_frame, text="Username:").grid(row=2, column=0, sticky="w", padx=5, pady=3)
+        self.username_entry = tk.Entry(case_frame, width=30)
+        self.username_entry.grid(row=2, column=1, sticky="w", padx=5, pady=3)
+
+        tk.Label(case_frame, text="Analyst Notes:").grid(row=3, column=0, sticky="nw", padx=5, pady=3)
+        self.notes_text = tk.Text(case_frame, width=80, height=4)
+        self.notes_text.grid(row=3, column=1, columnspan=3, sticky="w", padx=5, pady=3)
 
         subtitle_label = tk.Label(
             self.root,
@@ -334,6 +366,13 @@ class EncodedCommandAnalyzerGUI:
             return
 
         try:
+            case_context = self.get_case_context()
+            has_context = any(value for value in case_context.values())
+
+            if has_context:
+                for result in self.analysis_results:
+                    result["case_context"] = case_context
+                    
             json_path = export_to_json(self.analysis_results)
             csv_path = export_to_csv(self.analysis_results)
             markdown_path = export_to_markdown(self.analysis_results)
@@ -360,6 +399,16 @@ class EncodedCommandAnalyzerGUI:
             text="Risk Level: Not Analyzed",
             bg="#334155"
         )
+    
+    def get_case_context(self):
+        return {
+            "case_id": self.case_id_entry.get().strip(),
+            "analyst": self.analyst_entry.get().strip(),
+            "alert_source": self.alert_source_entry.get().strip(),
+            "hostname": self.hostname_entry.get().strip(),
+            "username": self.username_entry.get().strip(),
+            "analyst_notes": self.notes_text.get("1.0", tk.END).strip()
+        }
 
 
 def main():
