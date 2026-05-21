@@ -8,7 +8,7 @@
 ![MITRE ATT&CK](https://img.shields.io/badge/MITRE-ATT%26CK-orange)
 ![Detection Mapping](https://img.shields.io/badge/Detection-Rule%20Mapping-red)
 ![Templates](https://img.shields.io/badge/Templates-Sigma%20%7C%20Sentinel-blue)
-![External Templates](https://img.shields.io/badge/Templates-External%20JSON-blue)
+![YAML Templates](https://img.shields.io/badge/Templates-YAML%20Library-blue)
 ![Coverage](https://img.shields.io/badge/Coverage-Summary-success)
 ![Branding](https://img.shields.io/badge/Reports-Custom%20Branding-blue)
 ![Configurable Rules](https://img.shields.io/badge/Rules-Configurable-blue)
@@ -23,17 +23,48 @@
 
 **Encoded Command Analyzer** is a Python-based detection engineering utility for decoding and analyzing encoded command-line content.
 
-The tool is designed to help security analysts and detection engineers triage suspicious commands, identify signs of PowerShell abuse, detect common obfuscation patterns, map findings to MITRE ATT&CK techniques, suggest related detection rule ideas, generate starter Sigma and Microsoft Sentinel KQL templates, summarize detection coverage, and produce analyst-friendly investigation reports with optional case context and custom report branding.
+The tool helps security analysts and detection engineers triage suspicious commands, identify signs of PowerShell abuse, detect common obfuscation patterns, map findings to MITRE ATT&CK techniques, suggest related detection rule ideas, load starter Sigma and Microsoft Sentinel KQL templates from a YAML template library, summarize detection coverage, and produce analyst-friendly investigation reports with optional case context and custom report branding.
 
-This project started as a simple Base64 decoder and has expanded into a lightweight encoded command analysis tool with CLI support, GUI support, batch file analysis, chained decoding, compressed Base64 support, XOR Hex decoding, suspicious keyword detection, configurable keyword rules, risk scoring, MITRE ATT&CK mapping, detection rule mapping, external detection template loading, detection coverage summaries, analyst-ready exports, unit testing, Windows executable packaging, HTML report generation, optional case context enrichment, and custom report branding.
+This project started as a simple Base64 decoder and has expanded into a lightweight encoded command analysis tool with CLI support, GUI support, batch file analysis, chained decoding, compressed Base64 support, XOR Hex decoding, suspicious keyword detection, configurable keyword rules, risk scoring, MITRE ATT&CK mapping, detection rule mapping, YAML-based detection template loading, detection coverage summaries, analyst-ready exports, unit testing, Windows executable packaging, HTML report generation, optional case context enrichment, and custom report branding.
 
 ---
 
 ## Current Version
 
-**Version 28**
+**Version 29**
 
-### Current Capabilities
+### What Changed in Version 29
+
+Version 29 adds a **YAML-based detection template library**.
+
+Earlier versions stored external detection templates in a single JSON file. Version 29 moves detection templates into individual YAML files organized by platform and template type.
+
+New template structure:
+
+```text
+templates/
+├── sigma/
+│   └── suspicious_powershell_encodedcommand.yml
+└── sentinel/
+    ├── powershell_encodedcommand.yml
+    ├── powershell_iex_usage.yml
+    ├── powershell_download_cradle.yml
+    └── command_shell_execution.yml
+```
+
+This makes the project easier to maintain, easier to expand, and more aligned with real detection engineering repositories. Analysts can now add new Sigma or Microsoft Sentinel KQL templates without modifying the core Python detection logic.
+
+Version 29 also adds:
+
+- `template_loader.py`
+- YAML template loading with `PyYAML`
+- Template matching based on YAML `keywords`
+- Template source file tracking through `source_file`
+- Cleaner separation between detection logic and detection content
+
+---
+
+## Current Capabilities
 
 - Decode standard Base64 strings
 - Decode PowerShell UTF-16LE EncodedCommand values
@@ -55,12 +86,11 @@ This project started as a simple Base64 decoder and has expanded into a lightwei
 - Map suspicious indicators to MITRE ATT&CK techniques
 - Suggest related detection rule ideas
 - Identify possible log sources for detection engineering
-- Generate starter Sigma detection templates
-- Generate starter Microsoft Sentinel KQL detection templates
-- Load detection templates from an external JSON config file
-- Manage Sigma and Microsoft Sentinel KQL templates without editing Python code
-- Add or modify detection templates through `config/detection_templates.json`
-- Use external template matching based on suspicious keyword indicators
+- Load Sigma detection templates from YAML files
+- Load Microsoft Sentinel KQL detection templates from YAML files
+- Manage detection templates without editing Python code
+- Add or modify templates under the `templates/` directory
+- Match detection templates based on decoded command content
 - Generate a detection coverage summary
 - Summarize MITRE ATT&CK techniques across all decoded results
 - Summarize detection rule ideas across all decoded results
@@ -320,11 +350,102 @@ Detection rule mappings are suggestions and should be tuned for the target envir
 
 ---
 
+## YAML Detection Template Library
+
+Version 29 uses a YAML-based detection template library.
+
+Detection templates are loaded from:
+
+```text
+templates/
+```
+
+Expected structure:
+
+```text
+templates/
+├── sigma/
+│   └── suspicious_powershell_encodedcommand.yml
+└── sentinel/
+    ├── powershell_encodedcommand.yml
+    ├── powershell_iex_usage.yml
+    ├── powershell_download_cradle.yml
+    └── command_shell_execution.yml
+```
+
+Each YAML template can include:
+
+| Field | Purpose |
+|---|---|
+| `template_name` | Name of the detection template |
+| `template_type` | Template type, such as Sigma or Microsoft Sentinel KQL |
+| `severity` | Suggested severity |
+| `keywords` | Keywords used to match decoded content to the template |
+| `description` | Description of what the template detects |
+| `query` | Sigma rule body or KQL query text |
+
+Example YAML template:
+
+```yaml
+template_name: PowerShell Invoke-Expression Usage
+template_type: Microsoft Sentinel KQL
+severity: Medium
+keywords:
+  - iex
+  - invoke-expression
+description: Detects PowerShell Invoke-Expression usage, commonly used in obfuscated execution chains.
+query: |
+  DeviceProcessEvents
+  | where FileName in~ ("powershell.exe", "pwsh.exe")
+  | where ProcessCommandLine has_any ("iex", "invoke-expression")
+  | project Timestamp, DeviceName, InitiatingProcessAccountName, FileName, ProcessCommandLine, InitiatingProcessFileName, ReportId
+```
+
+If decoded content contains one of the configured keywords, the matching detection template is included in:
+
+```text
+CLI output
+output/analysis_result.json
+output/analysis_result.csv
+output/triage_report.md
+output/triage_report.html
+```
+
+The YAML loader is implemented in:
+
+```text
+template_loader.py
+```
+
+The detection engine calls the YAML loader with:
+
+```python
+detection_templates = match_yaml_detection_templates(decoded_text)
+```
+
+This keeps the same `detection_templates` output field while changing the source of template content from a single JSON file to a structured YAML library.
+
+### Validate YAML Templates
+
+To validate a YAML file, run:
+
+```powershell
+python -c "import yaml; yaml.safe_load(open('templates\\sentinel\\powershell_iex_usage.yml', encoding='utf-8')); print('YAML valid')"
+```
+
+To validate all YAML templates quickly:
+
+```powershell
+python -c "import os, yaml; [yaml.safe_load(open(os.path.join(r, f), encoding='utf-8')) for r, _, fs in os.walk('templates') for f in fs if f.endswith(('.yml', '.yaml'))]; print('All YAML templates valid')"
+```
+
+---
+
 ## Detection Templates
 
-The tool can generate starter detection templates.
+The tool can suggest starter detection templates.
 
-When suspicious decoded content matches known patterns, the tool can suggest starter detection templates such as:
+When suspicious decoded content matches known patterns, the tool can suggest templates such as:
 
 - Sigma rules
 - Microsoft Sentinel KQL queries
@@ -335,7 +456,7 @@ Example decoded command:
 powershell.exe -enc IEX
 ```
 
-Example generated templates:
+Example matched templates:
 
 ```text
 Sigma: Suspicious PowerShell EncodedCommand
@@ -350,62 +471,9 @@ Detection templates may include:
 - Severity
 - Description
 - Query or rule body
+- Source YAML file
 
 These templates are intended as starting points and should be reviewed, tested, and tuned before production use.
-
----
-
-## External Detection Template Files
-
-Version 28 adds support for external detection template files.
-
-Detection templates are now loaded from:
-
-```text
-config/detection_templates.json
-```
-
-This allows detection engineers to add, remove, or modify Sigma and Microsoft Sentinel KQL templates without editing the Python source code.
-
-Each template can include:
-
-| Field | Purpose |
-|---|---|
-| `template_name` | Name of the detection template |
-| `template_type` | Template type, such as Sigma or Microsoft Sentinel KQL |
-| `severity` | Suggested severity |
-| `keywords` | Keywords used to match decoded content to the template |
-| `description` | Description of what the template detects |
-| `query` | Sigma rule body or KQL query text |
-
-Example template:
-
-```json
-{
-  "template_name": "PowerShell Invoke-Expression Usage",
-  "template_type": "Microsoft Sentinel KQL",
-  "severity": "Medium",
-  "keywords": ["iex", "invoke-expression"],
-  "description": "Detects PowerShell command lines containing IEX or Invoke-Expression.",
-  "query": "DeviceProcessEvents\n| where FileName in~ (\"powershell.exe\", \"pwsh.exe\")\n| where ProcessCommandLine has_any (\"iex\", \"invoke-expression\")"
-}
-```
-
-If decoded content contains one of the configured keywords, the matching detection template is included in:
-
-```text
-CLI output
-output/analysis_result.json
-output/analysis_result.csv
-output/triage_report.md
-output/triage_report.html
-```
-
-Validate the JSON file with:
-
-```powershell
-python -m json.tool config\detection_templates.json
-```
 
 ---
 
@@ -419,7 +487,7 @@ It summarizes:
 
 - MITRE ATT&CK techniques identified
 - Detection rule ideas suggested
-- Detection templates generated
+- Detection templates matched
 
 Example coverage summary:
 
@@ -644,9 +712,17 @@ encoded-command-analyzer/
 ├── decoder_engine.py
 ├── detection_engine.py
 ├── report_exporter.py
+├── template_loader.py
 ├── config/
-│   ├── keyword_rules.json
-│   └── detection_templates.json
+│   └── keyword_rules.json
+├── templates/
+│   ├── sigma/
+│   │   └── suspicious_powershell_encodedcommand.yml
+│   └── sentinel/
+│       ├── powershell_encodedcommand.yml
+│       ├── powershell_iex_usage.yml
+│       ├── powershell_download_cradle.yml
+│       └── command_shell_execution.yml
 ├── samples/
 │   └── sample_batch.txt
 ├── tests/
@@ -658,6 +734,7 @@ encoded-command-analyzer/
 │   ├── triage_report.md
 │   └── triage_report.html
 ├── README.md
+├── requirements.txt
 ├── LICENSE
 └── .gitignore
 ```
@@ -672,31 +749,52 @@ Build artifacts such as `build/`, `dist/`, and `*.spec` are intentionally exclud
 | `encoded_command_gui.py` | Tkinter GUI entry point |
 | `decoder_engine.py` | Decoding logic for Base64, UTF-16LE, URL, Hex, chained decoding, compressed Base64, and XOR Hex |
 | `detection_engine.py` | Suspicious keyword detection, configurable keyword loading, risk scoring, analysis logic, MITRE ATT&CK mapping, detection rule mapping, and detection template matching |
+| `template_loader.py` | Loads and matches YAML-based Sigma and Microsoft Sentinel detection templates |
 | `report_exporter.py` | JSON, CSV, Markdown, and HTML export functions |
 | `config/keyword_rules.json` | Configurable suspicious keyword rules |
-| `config/detection_templates.json` | External Sigma and Microsoft Sentinel KQL detection templates |
+| `templates/sigma/` | YAML-based Sigma detection templates |
+| `templates/sentinel/` | YAML-based Microsoft Sentinel KQL detection templates |
 | `samples/` | Sample input files for testing |
 | `tests/` | Unit tests for decoder and detection logic |
 | `output/` | Stores exported analysis results and triage reports |
+| `requirements.txt` | Python package dependencies such as `pyyaml` |
 
 ---
 
 ## Requirements
 
-This project currently uses Python standard libraries only.
+This project uses Python 3.x.
 
-No external packages are required for the analyzer itself.
+Version 29 requires `PyYAML` for YAML template loading.
 
-Tested with:
+Install requirements:
+
+```powershell
+pip install -r requirements.txt
+```
+
+Or install PyYAML directly:
+
+```powershell
+pip install pyyaml
+```
+
+Example `requirements.txt`:
 
 ```text
-Python 3.x
+pyyaml
 ```
 
 For Windows executable packaging, PyInstaller is required:
 
 ```powershell
 pip install pyinstaller
+```
+
+Tested with:
+
+```text
+Python 3.x
 ```
 
 ---
@@ -717,6 +815,7 @@ The tests validate:
 - Suspicious keyword detection
 - Risk scoring
 - MITRE ATT&CK mapping
+- YAML detection template loading
 
 Run all tests from the project root:
 
@@ -1117,7 +1216,7 @@ Exported fields include:
 - Risk reasons
 - MITRE ATT&CK mappings
 - Detection rule mappings
-- Detection templates
+- YAML detection templates
 - Detection coverage summary in Markdown and HTML reports
 
 ---
@@ -1142,7 +1241,7 @@ The generated Markdown triage report includes:
 - Risk reasons
 - MITRE ATT&CK mappings
 - Detection rule mappings
-- Detection templates
+- YAML detection templates
 
 The report is saved to:
 
@@ -1171,7 +1270,7 @@ The generated HTML report includes:
 - Risk score and reasons
 - MITRE ATT&CK mappings
 - Detection rule mappings
-- Detection templates
+- YAML detection templates
 - Dark-themed browser-friendly formatting
 
 The report is saved to:
@@ -1202,7 +1301,7 @@ start output\triage_report.html
 9. Review risk score and reasons.
 10. Review MITRE ATT&CK mappings.
 11. Review detection rule mappings.
-12. Review suggested Sigma or Sentinel detection templates.
+12. Review matched Sigma or Sentinel YAML templates.
 13. Review the detection coverage summary.
 14. Export results to JSON, CSV, Markdown, or HTML.
 15. Attach output to triage notes or investigation documentation.
@@ -1226,7 +1325,7 @@ This project can support:
 - Detection rule development
 - Sigma rule drafting
 - Microsoft Sentinel KQL drafting
-- Detection template management
+- Detection template library management
 - Detection coverage review
 - Branded report generation
 - Portfolio demonstration for detection engineering roles
@@ -1254,10 +1353,85 @@ It is not intended to execute decoded content.
 
 Planned upgrades:
 
-- Version 29: Add YAML-based detection template library
 - Version 30: Add saved GUI analyst profiles or default report settings
 - Version 31: Add GUI report branding fields
-- Version 32: Add template validation checks
+- Version 32: Add YAML template validation checks
+- Version 33: Add detection template metadata validation and linting
+
+---
+
+## Version History
+
+### Version 29
+
+Added YAML-based detection template library.
+
+New files and folders:
+
+```text
+template_loader.py
+templates/
+├── sigma/
+└── sentinel/
+```
+
+Version 29 moves detection template content into individual YAML files. This gives the project a more realistic detection engineering layout and makes templates easier to add, review, and maintain.
+
+### Version 28
+
+Added external detection templates through a JSON config file.
+
+```text
+config/detection_templates.json
+```
+
+Version 28 allowed Sigma and Microsoft Sentinel KQL templates to be managed outside of Python code.
+
+### Version 27
+
+Added custom report branding through CLI arguments:
+
+```text
+--report-title
+--organization
+--classification
+```
+
+### Version 26
+
+Added GUI case context fields:
+
+```text
+Case ID
+Analyst
+Alert Source
+Hostname
+Username
+Analyst Notes
+```
+
+### Version 25
+
+Added Detection Coverage Summary.
+
+Coverage summary includes:
+
+- MITRE ATT&CK techniques covered
+- Detection rule ideas
+- Detection templates
+
+---
+
+## Git Commit
+
+After updating the code, templates, and README:
+
+```powershell
+git status
+git add .
+git commit -m "Add YAML-based detection template library"
+git push
+```
 
 ---
 
