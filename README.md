@@ -23,13 +23,13 @@
 
 The tool is designed to help security analysts and detection engineers triage suspicious commands, identify signs of PowerShell abuse, detect common obfuscation patterns, map findings to MITRE ATT&CK techniques, suggest related detection rule ideas, generate starter Sigma and Microsoft Sentinel KQL templates, summarize detection coverage, and produce analyst-friendly investigation reports.
 
-This project started as a simple Base64 decoder and has expanded into a lightweight encoded command analysis tool with CLI support, GUI support, batch file analysis, chained decoding, compressed Base64 support, XOR Hex decoding, suspicious keyword detection, configurable keyword rules, risk scoring, MITRE ATT&CK mapping, detection rule mapping, detection template generation, detection coverage summaries, analyst-ready exports, unit testing, Windows executable packaging, HTML report generation, and optional case context enrichment.
+This project started as a simple Base64 decoder and has expanded into a lightweight encoded command analysis tool with CLI support, GUI support, batch file analysis, chained decoding, compressed Base64 support, XOR Hex decoding, suspicious keyword detection, configurable keyword rules, risk scoring, MITRE ATT&CK mapping, detection rule mapping, detection template generation, detection coverage summaries, analyst-ready exports, unit testing, Windows executable packaging, HTML report generation, and optional case context enrichment through both CLI and GUI workflows.
 
 ---
 
 ## Current Version
 
-**Version 25**
+**Version 26**
 
 ### Current Capabilities
 
@@ -59,8 +59,10 @@ This project started as a simple Base64 decoder and has expanded into a lightwei
 - Summarize MITRE ATT&CK techniques across all decoded results
 - Summarize detection rule ideas across all decoded results
 - Summarize Sigma and Sentinel templates across all decoded results
-- Add optional case context to investigation results
+- Add optional case context from CLI arguments
+- Add optional case context directly from the GUI
 - Add optional analyst notes to exported reports
+- Export GUI-entered case context to JSON, CSV, Markdown, and HTML reports
 - Export analysis results to JSON
 - Export analysis results to CSV
 - Export analyst triage reports to Markdown and HTML
@@ -117,26 +119,46 @@ This tool provides a simple way to decode suspicious content and quickly review 
 
 The tool supports optional analyst case context fields.
 
-Case context is **not shown by default**. It only appears in the console and exported reports when explicitly provided through CLI arguments.
+Case context is **not shown by default**. It only appears in the console, GUI exports, and exported reports when explicitly provided.
+
+Case context can be added in two ways:
+
+1. Through CLI arguments
+2. Through the Tkinter GUI case context fields
 
 Supported case fields:
 
-| Field | CLI Argument |
-|---|---|
-| Case ID | `--case-id` |
-| Analyst Name | `--analyst` |
-| Alert Source | `--alert-source` |
-| Hostname | `--hostname` |
-| Username | `--username` |
-| Analyst Notes | `--notes` |
+| Field | CLI Argument | GUI Field |
+|---|---|---|
+| Case ID | `--case-id` | Case ID |
+| Analyst Name | `--analyst` | Analyst |
+| Alert Source | `--alert-source` | Alert Source |
+| Hostname | `--hostname` | Hostname |
+| Username | `--username` | Username |
+| Analyst Notes | `--notes` | Analyst Notes |
 
-Example:
+### CLI Case Context Example
 
 ```powershell
 python base64_decoder.py --input "cG93ZXJzaGVsbCUyRWV4ZSUyMC1lbmMlMjBJRVg=" --export --case-id "INC-1001" --analyst "SOC Analyst" --alert-source "Microsoft Defender" --hostname "WIN-TEST01" --username "test.user" --notes "Suspicious encoded PowerShell observed in process command line."
 ```
 
-The case context is included in:
+### GUI Case Context
+
+Version 26 adds optional case context fields directly into the Tkinter GUI.
+
+The GUI now supports:
+
+```text
+Case ID
+Analyst
+Alert Source
+Hostname
+Username
+Analyst Notes
+```
+
+When these fields are populated and results are exported, the case context is included in:
 
 ```text
 output/analysis_result.json
@@ -144,6 +166,8 @@ output/analysis_result.csv
 output/triage_report.md
 output/triage_report.html
 ```
+
+If the GUI fields are left blank, no case context is added.
 
 For public examples, use generic values such as `SOC Analyst` or `Analyst Name`.
 
@@ -289,7 +313,7 @@ These templates are intended as starting points and should be reviewed, tested, 
 
 ## Detection Coverage Summary
 
-Version 25 adds a detection coverage summary.
+The tool includes a detection coverage summary.
 
 The coverage summary aggregates key detection engineering outputs across all analysis results.
 
@@ -435,12 +459,15 @@ The project includes a Tkinter-based GUI that allows analysts to:
 - Paste encoded command content
 - Analyze a single input
 - Load a batch file
+- Add optional case context fields
+- Add analyst notes from the GUI
 - Review decoded output
 - Review suspicious keyword matches
 - View risk score and reasons
 - Review MITRE ATT&CK mappings
 - Review detection rule mappings
 - Review detection templates
+- Include GUI-entered case context in exported reports
 - Export results to JSON, CSV, Markdown, and HTML
 - Clear and rerun analysis
 
@@ -1052,7 +1079,7 @@ start output\triage_report.html
 1. Copy suspicious encoded command from an alert.
 2. Open Encoded Command Analyzer.
 3. Paste the encoded value or load a batch file.
-4. Add optional case context when needed.
+4. Add optional case context through CLI arguments or GUI fields when needed.
 5. Run analysis.
 6. Review decoded output.
 7. Review suspicious keyword matches.
@@ -1109,10 +1136,10 @@ It is not intended to execute decoded content.
 
 Planned upgrades:
 
-- Version 26: Add GUI case context fields
 - Version 27: Add report branding or custom headers
 - Version 28: Add external detection template files
 - Version 29: Add YAML-based detection template library
+- Version 30: Add saved GUI analyst profiles or default report settings
 
 ---
 
