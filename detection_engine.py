@@ -382,91 +382,29 @@ def map_detection_rules(found_keywords):
     return detection_rules
 
 def map_detection_templates(found_keywords):
-    templates = []
+    templates = load_detection_templates()
+    matched_templates = []
 
-    keyword_set = set(found_keywords)
+    keyword_set = set(keyword.lower() for keyword in found_keywords)
 
-    if "powershell" in keyword_set and "-enc" in keyword_set:
-        templates.append({
-            "template_name": "Suspicious PowerShell EncodedCommand",
-            "template_type": "Sigma",
-            "severity": "High",
-            "description": "Detects PowerShell execution using encoded command arguments.",
-            "query": """title: Suspicious PowerShell EncodedCommand
-id: 00000000-0000-0000-0000-000000000024
-status: experimental
-description: Detects PowerShell execution using encoded command arguments.
-author: Encoded Command Analyzer
-logsource:
-  product: windows
-  category: process_creation
-detection:
-  selection:
-    Image|endswith:
-      - '\\powershell.exe'
-      - '\\pwsh.exe'
-    CommandLine|contains:
-      - '-enc'
-      - '-encodedcommand'
-  condition: selection
-falsepositives:
-  - Administrative scripts
-  - Software deployment tools
-level: high
-tags:
-  - attack.execution
-  - attack.t1059.001
-  - attack.defense_evasion
-  - attack.t1027"""
-        })
+    for template in templates:
+        required_keywords = template.get("keywords", [])
 
-        templates.append({
-            "template_name": "PowerShell EncodedCommand Execution",
-            "template_type": "Microsoft Sentinel KQL",
-            "severity": "High",
-            "description": "Detects PowerShell process executions containing encoded command arguments.",
-            "query": """DeviceProcessEvents
-| where FileName in~ ("powershell.exe", "pwsh.exe")
-| where ProcessCommandLine has_any ("-enc", "-encodedcommand")
-| project Timestamp, DeviceName, InitiatingProcessAccountName, FileName, ProcessCommandLine, InitiatingProcessFileName, InitiatingProcessCommandLine"""
-        })
+        if not required_keywords:
+            continue
 
-    if "iex" in keyword_set or "invoke-expression" in keyword_set:
-        templates.append({
-            "template_name": "PowerShell Invoke-Expression Usage",
-            "template_type": "Microsoft Sentinel KQL",
-            "severity": "Medium",
-            "description": "Detects PowerShell command lines containing IEX or Invoke-Expression.",
-            "query": """DeviceProcessEvents
-| where FileName in~ ("powershell.exe", "pwsh.exe")
-| where ProcessCommandLine has_any ("iex", "invoke-expression")
-| project Timestamp, DeviceName, InitiatingProcessAccountName, FileName, ProcessCommandLine, InitiatingProcessFileName, InitiatingProcessCommandLine"""
-        })
+        required_keyword_set = set(keyword.lower() for keyword in required_keywords)
 
-    if "downloadstring" in keyword_set or "webclient" in keyword_set:
-        templates.append({
-            "template_name": "PowerShell Download Cradle",
-            "template_type": "Microsoft Sentinel KQL",
-            "severity": "High",
-            "description": "Detects PowerShell command lines containing common download cradle indicators.",
-            "query": """DeviceProcessEvents
-| where FileName in~ ("powershell.exe", "pwsh.exe")
-| where ProcessCommandLine has_any ("downloadstring", "webclient", "invoke-webrequest", "iwr", "wget", "curl")
-| project Timestamp, DeviceName, InitiatingProcessAccountName, FileName, ProcessCommandLine, InitiatingProcessFileName, InitiatingProcessCommandLine"""
-        })
+        if keyword_set.intersection(required_keyword_set):
+            matched_templates.append({
+                "template_name": template.get("template_name", ""),
+                "template_type": template.get("template_type", ""),
+                "severity": template.get("severity", ""),
+                "description": template.get("description", ""),
+                "query": template.get("query", "")
+            })
 
-    if "cmd.exe" in keyword_set:
-        templates.append({
-            "template_name": "Command Shell Execution",
-            "template_type": "Microsoft Sentinel KQL",
-            "severity": "Low",
-            "description": "Detects cmd.exe execution for process-chain investigation.",
-            "query": """DeviceProcessEvents
-| where FileName =~ "cmd.exe"
-| project Timestamp, DeviceName, InitiatingProcessAccountName, FileName, ProcessCommandLine, InitiatingProcessFileName, InitiatingProcessCommandLine"""
-        })
-
-    return templates
+    return matched_templates
 
 def analyze_decoded_result(result):
     decoded_text = result["decoded_text"]
@@ -496,3 +434,23 @@ def analyze_decoded_result(result):
         analysis["source_encoding"] = result["source_encoding"]
 
     return analysis
+
+def load_detection_templates():
+    template_path = os.path.join("config", "detection_templates.json")
+
+    default_templates = []
+
+    try:
+        with open(template_path, "r", encoding="utf-8") as file:
+            templates = json.load(file)
+
+        if isinstance(templates, list):
+            return templates
+
+        return default_templates
+
+    except FileNotFoundError:
+        return default_templates
+
+    except json.JSONDecodeError:
+        return default_templates

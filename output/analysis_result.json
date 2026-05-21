@@ -1,6 +1,6 @@
 [
     {
-        "timestamp": "2026-05-21T18:33:55",
+        "timestamp": "2026-05-21T19:05:37",
         "encoding": "UTF-8",
         "decoded_text": "powershell%2Eexe%20-enc%20IEX",
         "suspicious_keywords": [
@@ -66,7 +66,7 @@
                 "template_type": "Sigma",
                 "severity": "High",
                 "description": "Detects PowerShell execution using encoded command arguments.",
-                "query": "title: Suspicious PowerShell EncodedCommand\nid: 00000000-0000-0000-0000-000000000024\nstatus: experimental\ndescription: Detects PowerShell execution using encoded command arguments.\nauthor: Encoded Command Analyzer\nlogsource:\n  product: windows\n  category: process_creation\ndetection:\n  selection:\n    Image|endswith:\n      - '\\powershell.exe'\n      - '\\pwsh.exe'\n    CommandLine|contains:\n      - '-enc'\n      - '-encodedcommand'\n  condition: selection\nfalsepositives:\n  - Administrative scripts\n  - Software deployment tools\nlevel: high\ntags:\n  - attack.execution\n  - attack.t1059.001\n  - attack.defense_evasion\n  - attack.t1027"
+                "query": "title: Suspicious PowerShell EncodedCommand\nid: 00000000-0000-0000-0000-000000000028\nstatus: experimental\ndescription: Detects PowerShell execution using encoded command arguments.\nauthor: Encoded Command Analyzer\nlogsource:\n  product: windows\n  category: process_creation\ndetection:\n  selection:\n    Image|endswith:\n      - '\\\\powershell.exe'\n      - '\\\\pwsh.exe'\n    CommandLine|contains:\n      - '-enc'\n      - '-encodedcommand'\n  condition: selection\nfalsepositives:\n  - Administrative scripts\n  - Software deployment tools\nlevel: high\ntags:\n  - attack.execution\n  - attack.t1059.001\n  - attack.defense_evasion\n  - attack.t1027"
             },
             {
                 "template_name": "PowerShell EncodedCommand Execution",
@@ -86,13 +86,13 @@
         "decode_level": 1,
         "original_input": "cG93ZXJzaGVsbCUyRWV4ZSUyMC1lbmMlMjBJRVg=",
         "report_branding": {
-            "report_title": "Encoded PowerShell Triage Report",
-            "organization": "Detection Engineering Lab",
-            "classification": "Internal Use Only"
+            "report_title": "Encoded Command Analyzer Triage Report",
+            "organization": "",
+            "classification": ""
         }
     },
     {
-        "timestamp": "2026-05-21T18:33:55",
+        "timestamp": "2026-05-21T19:05:37",
         "encoding": "URL",
         "decoded_text": "powershell.exe -enc IEX",
         "suspicious_keywords": [
@@ -158,7 +158,7 @@
                 "template_type": "Sigma",
                 "severity": "High",
                 "description": "Detects PowerShell execution using encoded command arguments.",
-                "query": "title: Suspicious PowerShell EncodedCommand\nid: 00000000-0000-0000-0000-000000000024\nstatus: experimental\ndescription: Detects PowerShell execution using encoded command arguments.\nauthor: Encoded Command Analyzer\nlogsource:\n  product: windows\n  category: process_creation\ndetection:\n  selection:\n    Image|endswith:\n      - '\\powershell.exe'\n      - '\\pwsh.exe'\n    CommandLine|contains:\n      - '-enc'\n      - '-encodedcommand'\n  condition: selection\nfalsepositives:\n  - Administrative scripts\n  - Software deployment tools\nlevel: high\ntags:\n  - attack.execution\n  - attack.t1059.001\n  - attack.defense_evasion\n  - attack.t1027"
+                "query": "title: Suspicious PowerShell EncodedCommand\nid: 00000000-0000-0000-0000-000000000028\nstatus: experimental\ndescription: Detects PowerShell execution using encoded command arguments.\nauthor: Encoded Command Analyzer\nlogsource:\n  product: windows\n  category: process_creation\ndetection:\n  selection:\n    Image|endswith:\n      - '\\\\powershell.exe'\n      - '\\\\pwsh.exe'\n    CommandLine|contains:\n      - '-enc'\n      - '-encodedcommand'\n  condition: selection\nfalsepositives:\n  - Administrative scripts\n  - Software deployment tools\nlevel: high\ntags:\n  - attack.execution\n  - attack.t1059.001\n  - attack.defense_evasion\n  - attack.t1027"
             },
             {
                 "template_name": "PowerShell EncodedCommand Execution",
@@ -179,9 +179,9 @@
         "source_encoding": "UTF-8",
         "original_input": "cG93ZXJzaGVsbCUyRWV4ZSUyMC1lbmMlMjBJRVg=",
         "report_branding": {
-            "report_title": "Encoded PowerShell Triage Report",
-            "organization": "Detection Engineering Lab",
-            "classification": "Internal Use Only"
+            "report_title": "Encoded Command Analyzer Triage Report",
+            "organization": "",
+            "classification": ""
         }
     }
 ]

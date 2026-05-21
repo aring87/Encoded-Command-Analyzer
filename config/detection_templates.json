@@ -1,0 +1,42 @@
+[
+  {
+    "template_name": "Suspicious PowerShell EncodedCommand",
+    "template_type": "Sigma",
+    "severity": "High",
+    "keywords": ["powershell", "-enc"],
+    "description": "Detects PowerShell execution using encoded command arguments.",
+    "query": "title: Suspicious PowerShell EncodedCommand\nid: 00000000-0000-0000-0000-000000000028\nstatus: experimental\ndescription: Detects PowerShell execution using encoded command arguments.\nauthor: Encoded Command Analyzer\nlogsource:\n  product: windows\n  category: process_creation\ndetection:\n  selection:\n    Image|endswith:\n      - '\\\\powershell.exe'\n      - '\\\\pwsh.exe'\n    CommandLine|contains:\n      - '-enc'\n      - '-encodedcommand'\n  condition: selection\nfalsepositives:\n  - Administrative scripts\n  - Software deployment tools\nlevel: high\ntags:\n  - attack.execution\n  - attack.t1059.001\n  - attack.defense_evasion\n  - attack.t1027"
+  },
+  {
+    "template_name": "PowerShell EncodedCommand Execution",
+    "template_type": "Microsoft Sentinel KQL",
+    "severity": "High",
+    "keywords": ["powershell", "-enc"],
+    "description": "Detects PowerShell process executions containing encoded command arguments.",
+    "query": "DeviceProcessEvents\n| where FileName in~ (\"powershell.exe\", \"pwsh.exe\")\n| where ProcessCommandLine has_any (\"-enc\", \"-encodedcommand\")\n| project Timestamp, DeviceName, InitiatingProcessAccountName, FileName, ProcessCommandLine, InitiatingProcessFileName, InitiatingProcessCommandLine"
+  },
+  {
+    "template_name": "PowerShell Invoke-Expression Usage",
+    "template_type": "Microsoft Sentinel KQL",
+    "severity": "Medium",
+    "keywords": ["iex", "invoke-expression"],
+    "description": "Detects PowerShell command lines containing IEX or Invoke-Expression.",
+    "query": "DeviceProcessEvents\n| where FileName in~ (\"powershell.exe\", \"pwsh.exe\")\n| where ProcessCommandLine has_any (\"iex\", \"invoke-expression\")\n| project Timestamp, DeviceName, InitiatingProcessAccountName, FileName, ProcessCommandLine, InitiatingProcessFileName, InitiatingProcessCommandLine"
+  },
+  {
+    "template_name": "PowerShell Download Cradle",
+    "template_type": "Microsoft Sentinel KQL",
+    "severity": "High",
+    "keywords": ["downloadstring", "webclient", "invoke-webrequest", "iwr", "wget", "curl"],
+    "description": "Detects PowerShell command lines containing common download cradle indicators.",
+    "query": "DeviceProcessEvents\n| where FileName in~ (\"powershell.exe\", \"pwsh.exe\")\n| where ProcessCommandLine has_any (\"downloadstring\", \"webclient\", \"invoke-webrequest\", \"iwr\", \"wget\", \"curl\")\n| project Timestamp, DeviceName, InitiatingProcessAccountName, FileName, ProcessCommandLine, InitiatingProcessFileName, InitiatingProcessCommandLine"
+  },
+  {
+    "template_name": "Command Shell Execution",
+    "template_type": "Microsoft Sentinel KQL",
+    "severity": "Low",
+    "keywords": ["cmd.exe"],
+    "description": "Detects cmd.exe execution for process-chain investigation.",
+    "query": "DeviceProcessEvents\n| where FileName =~ \"cmd.exe\"\n| project Timestamp, DeviceName, InitiatingProcessAccountName, FileName, ProcessCommandLine, InitiatingProcessFileName, InitiatingProcessCommandLine"
+  }
+]

@@ -1,8 +1,4 @@
-# Encoded PowerShell Triage Report
-
-**Organization:** Detection Engineering Lab
-
-**Classification:** Internal Use Only
+# Encoded Command Analyzer Triage Report
 
 ---
 
@@ -38,7 +34,7 @@
 
 ### Metadata
 
-- Timestamp: 2026-05-21T18:33:55
+- Timestamp: 2026-05-21T19:05:37
 - Encoding: UTF-8
 - Decode Level: 1
 - Source Encoding: 
@@ -104,7 +100,7 @@ powershell%2Eexe%20-enc%20IEX
 
 ```text
 title: Suspicious PowerShell EncodedCommand
-id: 00000000-0000-0000-0000-000000000024
+id: 00000000-0000-0000-0000-000000000028
 status: experimental
 description: Detects PowerShell execution using encoded command arguments.
 author: Encoded Command Analyzer
@@ -114,8 +110,8 @@ logsource:
 detection:
   selection:
     Image|endswith:
-      - '\powershell.exe'
-      - '\pwsh.exe'
+      - '\\powershell.exe'
+      - '\\pwsh.exe'
     CommandLine|contains:
       - '-enc'
       - '-encodedcommand'
@@ -164,7 +160,7 @@ DeviceProcessEvents
 
 ### Metadata
 
-- Timestamp: 2026-05-21T18:33:55
+- Timestamp: 2026-05-21T19:05:37
 - Encoding: URL
 - Decode Level: 2
 - Source Encoding: UTF-8
@@ -230,7 +226,7 @@ powershell.exe -enc IEX
 
 ```text
 title: Suspicious PowerShell EncodedCommand
-id: 00000000-0000-0000-0000-000000000024
+id: 00000000-0000-0000-0000-000000000028
 status: experimental
 description: Detects PowerShell execution using encoded command arguments.
 author: Encoded Command Analyzer
@@ -240,8 +236,8 @@ logsource:
 detection:
   selection:
     Image|endswith:
-      - '\powershell.exe'
-      - '\pwsh.exe'
+      - '\\powershell.exe'
+      - '\\pwsh.exe'
     CommandLine|contains:
       - '-enc'
       - '-encodedcommand'
