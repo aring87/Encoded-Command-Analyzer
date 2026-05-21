@@ -1,6 +1,6 @@
 [
     {
-        "timestamp": "2026-05-21T19:35:09",
+        "timestamp": "2026-05-21T19:54:16",
         "encoding": "UTF-8",
         "decoded_text": "Hello world",
         "suspicious_keywords": [],
@@ -12,10 +12,18 @@
         "detection_templates": [],
         "decode_level": 1,
         "original_input": "SGVsbG8gd29ybGQ=",
+        "case_context": {
+            "case_id": "",
+            "analyst": "Adam Ring",
+            "alert_source": "",
+            "hostname": "",
+            "username": "",
+            "analyst_notes": ""
+        },
         "report_branding": {
             "report_title": "Encoded Command Analyzer Triage Report",
-            "organization": "",
-            "classification": ""
+            "organization": "RingForge Lab",
+            "classification": "TLP:AMBER"
         }
     }
 ]

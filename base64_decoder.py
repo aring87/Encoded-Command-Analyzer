@@ -5,7 +5,7 @@ import sys
 from decoder_engine import decode_input
 from detection_engine import analyze_decoded_result
 from report_exporter import export_to_csv, export_to_json, export_to_markdown, export_to_html
-
+from profile_loader import load_analyst_profile
 
 def print_analysis_result(analysis):
     print("====================================")
@@ -282,10 +282,10 @@ def print_summary(analysis_results):
     print("====================================")
 
 
-def apply_case_context(analysis_results, args):
+def apply_case_context(analysis_results, args, analyst_profile):
     case_context = {
         "case_id": args.case_id or "",
-        "analyst": args.analyst or "",
+        "analyst": args.analyst or analyst_profile.get("analyst", ""),
         "alert_source": args.alert_source or "",
         "hostname": args.hostname or "",
         "username": args.username or "",
@@ -303,11 +303,11 @@ def apply_case_context(analysis_results, args):
     return analysis_results
 
 
-def apply_report_branding(analysis_results, args):
+def apply_report_branding(analysis_results, args, analyst_profile):
     report_branding = {
-        "report_title": args.report_title or "Encoded Command Analyzer Triage Report",
-        "organization": args.organization or "",
-        "classification": args.classification or ""
+        "report_title": args.report_title or analyst_profile.get("default_report_title", "Encoded Command Analyzer Triage Report"),
+        "organization": args.organization or analyst_profile.get("organization", ""),
+        "classification": args.classification or analyst_profile.get("classification", "")
     }
 
     # Always attach branding so exported reports have a default title.
@@ -423,6 +423,8 @@ def build_parser():
 def main():
     parser = build_parser()
     args = parser.parse_args()
+    
+    analyst_profile = load_analyst_profile()
 
     if args.gui:
         launch_gui()
@@ -450,8 +452,8 @@ def main():
         print("No decodable results found.")
         return
 
-    analysis_results = apply_case_context(analysis_results, args)
-    analysis_results = apply_report_branding(analysis_results, args)
+    analysis_results = apply_case_context(analysis_results, args, analyst_profile)
+    analysis_results = apply_report_branding(analysis_results, args, analyst_profile)
 
     for analysis in analysis_results:
         print_analysis_result(analysis)

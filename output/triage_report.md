@@ -1,5 +1,9 @@
 # Encoded Command Analyzer Triage Report
 
+**Organization:** RingForge Lab
+
+**Classification:** TLP:AMBER
+
 ---
 
 ## Summary
@@ -7,6 +11,15 @@
 - Total Results: 1
 - Highest Risk: None
 - Highest Score: 0
+
+## Case Context
+
+- Case ID: 
+- Analyst: Adam Ring
+- Alert Source: 
+- Hostname: 
+- Username: 
+- Analyst Notes: 
 
 ---
 
@@ -30,7 +43,7 @@
 
 ### Metadata
 
-- Timestamp: 2026-05-21T19:35:09
+- Timestamp: 2026-05-21T19:54:16
 - Encoding: UTF-8
 - Decode Level: 1
 - Source Encoding: 
