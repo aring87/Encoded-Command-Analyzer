@@ -58,6 +58,21 @@ class EncodedCommandAnalyzerGUI:
         tk.Label(case_frame, text="Analyst Notes:").grid(row=3, column=0, sticky="nw", padx=5, pady=3)
         self.notes_text = tk.Text(case_frame, width=80, height=4)
         self.notes_text.grid(row=3, column=1, columnspan=3, sticky="w", padx=5, pady=3)
+        
+        branding_frame = tk.LabelFrame(self.root, text="Report Branding")
+        branding_frame.pack(fill=tk.X, padx=10, pady=5)
+
+        tk.Label(branding_frame, text="Report Title:").grid(row=0, column=0, sticky="w", padx=5, pady=3)
+        self.report_title_entry = tk.Entry(branding_frame, width=50)
+        self.report_title_entry.grid(row=0, column=1, sticky="w", padx=5, pady=3)
+
+        tk.Label(branding_frame, text="Organization:").grid(row=0, column=2, sticky="w", padx=5, pady=3)
+        self.organization_entry = tk.Entry(branding_frame, width=30)
+        self.organization_entry.grid(row=0, column=3, sticky="w", padx=5, pady=3)
+
+        tk.Label(branding_frame, text="Classification:").grid(row=1, column=0, sticky="w", padx=5, pady=3)
+        self.classification_entry = tk.Entry(branding_frame, width=30)
+        self.classification_entry.grid(row=1, column=1, sticky="w", padx=5, pady=3)
 
         subtitle_label = tk.Label(
             self.root,
@@ -367,12 +382,18 @@ class EncodedCommandAnalyzerGUI:
 
         try:
             case_context = self.get_case_context()
-            has_context = any(value for value in case_context.values())
+            report_branding = self.get_report_branding()
 
-            if has_context:
-                for result in self.analysis_results:
+            has_context = any(value for value in case_context.values())
+            has_branding = any(value for value in report_branding.values())
+
+            for result in self.analysis_results:
+                if has_context:
                     result["case_context"] = case_context
-                    
+
+                if has_branding:
+                    result["report_branding"] = report_branding
+
             json_path = export_to_json(self.analysis_results)
             csv_path = export_to_csv(self.analysis_results)
             markdown_path = export_to_markdown(self.analysis_results)
@@ -408,6 +429,13 @@ class EncodedCommandAnalyzerGUI:
             "hostname": self.hostname_entry.get().strip(),
             "username": self.username_entry.get().strip(),
             "analyst_notes": self.notes_text.get("1.0", tk.END).strip()
+        }
+    
+    def get_report_branding(self):
+        return {
+            "report_title": self.report_title_entry.get().strip(),
+            "organization": self.organization_entry.get().strip(),
+            "classification": self.classification_entry.get().strip()
         }
 
 
