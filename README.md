@@ -9,6 +9,7 @@
 ![Detection Mapping](https://img.shields.io/badge/Detection-Rule%20Mapping-red)
 ![Templates](https://img.shields.io/badge/Templates-Sigma%20%7C%20Sentinel-blue)
 ![YAML Templates](https://img.shields.io/badge/Templates-YAML%20Library-blue)
+![Analyst Profile](https://img.shields.io/badge/Profile-Analyst%20Defaults-blue)
 ![Coverage](https://img.shields.io/badge/Coverage-Summary-success)
 ![Branding](https://img.shields.io/badge/Reports-Custom%20Branding-blue)
 ![Configurable Rules](https://img.shields.io/badge/Rules-Configurable-blue)
@@ -31,15 +32,42 @@ This project started as a simple Base64 decoder and has expanded into a lightwei
 
 ## Current Version
 
-**Version 29**
+**Version 30**
 
-### What Changed in Version 29
+### What Changed in Version 30
 
-Version 29 adds a **YAML-based detection template library**.
+Version 30 adds **saved analyst profile defaults** and cleaner report context output.
 
-Earlier versions stored external detection templates in a single JSON file. Version 29 moves detection templates into individual YAML files organized by platform and template type.
+The tool can now load default analyst and report branding values from:
 
-New template structure:
+```text
+config/analyst_profile.json
+```
+
+This allows common report values such as analyst name, organization, classification, and default report title to be reused automatically without typing the same CLI arguments every time. CLI arguments still take priority, so analysts can override saved defaults when needed.
+
+Version 30 also improves exported reports by hiding blank case context fields in Markdown and HTML output. For example, if only the analyst name is provided, the report shows only the analyst field instead of empty Case ID, Alert Source, Hostname, Username, and Analyst Notes rows.
+
+Version 30 adds:
+
+- `profile_loader.py`
+- `config/analyst_profile.json`
+- Saved analyst default support
+- Saved organization default support
+- Saved classification default support
+- Saved default report title support
+- CLI override behavior for saved profile values
+- Cleaner Markdown Case Context output
+- Cleaner HTML Case Context output
+- CSV analyst notes consistency fix
+
+### Previous Version 29 Update
+
+Version 29 added a **YAML-based detection template library**.
+
+Earlier versions stored external detection templates in a single JSON file. Version 29 moved detection templates into individual YAML files organized by platform and template type.
+
+Template structure:
 
 ```text
 templates/
@@ -52,15 +80,7 @@ templates/
     └── command_shell_execution.yml
 ```
 
-This makes the project easier to maintain, easier to expand, and more aligned with real detection engineering repositories. Analysts can now add new Sigma or Microsoft Sentinel KQL templates without modifying the core Python detection logic.
-
-Version 29 also adds:
-
-- `template_loader.py`
-- YAML template loading with `PyYAML`
-- Template matching based on YAML `keywords`
-- Template source file tracking through `source_file`
-- Cleaner separation between detection logic and detection content
+This makes the project easier to maintain, easier to expand, and more aligned with real detection engineering repositories. Analysts can add new Sigma or Microsoft Sentinel KQL templates without modifying the core Python detection logic.
 
 ---
 
@@ -101,7 +121,11 @@ Version 29 also adds:
 - Add custom report titles to exported Markdown and HTML reports
 - Add organization, team, or lab name to exported reports
 - Add report classification or handling labels to exported reports
+- Load saved analyst profile defaults from `config/analyst_profile.json`
+- Load saved organization, classification, and default report title values
+- Override saved analyst profile values with CLI arguments when needed
 - Generate branded analyst-ready reports for portfolio or SOC-style documentation
+- Hide blank case context fields in Markdown and HTML reports
 - Export GUI-entered case context to JSON, CSV, Markdown, and HTML reports
 - Export analysis results to JSON
 - Export analysis results to CSV
@@ -159,12 +183,13 @@ This tool provides a simple way to decode suspicious content and quickly review 
 
 The tool supports optional analyst case context fields.
 
-Case context is **not shown by default**. It only appears in the console, GUI exports, and exported reports when explicitly provided.
+Case context can be provided through CLI arguments, GUI fields, or saved analyst profile defaults. Markdown and HTML reports automatically hide blank case context fields so exported reports stay clean and readable.
 
-Case context can be added in two ways:
+Case context can be added in three ways:
 
 1. Through CLI arguments
 2. Through the Tkinter GUI case context fields
+3. Through saved defaults in `config/analyst_profile.json`
 
 Supported case fields:
 
@@ -205,9 +230,51 @@ output/triage_report.md
 output/triage_report.html
 ```
 
-If the GUI fields are left blank, no case context is added.
+If a field is blank, Markdown and HTML reports omit that field from the Case Context section.
 
 For public examples, use generic values such as `SOC Analyst` or `Analyst Name`.
+
+---
+
+## Analyst Profile Defaults
+
+Version 30 adds support for saved analyst and report defaults.
+
+Default values are loaded from:
+
+```text
+config/analyst_profile.json
+```
+
+Example profile:
+
+```json
+{
+  "analyst": "SOC Analyst",
+  "organization": "Detection Engineering Lab",
+  "classification": "Internal Use Only",
+  "default_report_title": "Encoded Command Analyzer Triage Report"
+}
+```
+
+Supported profile fields:
+
+| Field | Purpose | CLI Override |
+|---|---|---|
+| `analyst` | Default analyst name for case context | `--analyst` |
+| `organization` | Default organization, team, or lab name for reports | `--organization` |
+| `classification` | Default handling label for reports | `--classification` |
+| `default_report_title` | Default title for Markdown and HTML reports | `--report-title` |
+
+Priority order:
+
+```text
+1. CLI arguments
+2. config/analyst_profile.json
+3. Safe built-in defaults
+```
+
+This means an analyst can store normal defaults in the profile file but still override them during a specific investigation.
 
 ---
 
@@ -215,7 +282,7 @@ For public examples, use generic values such as `SOC Analyst` or `Analyst Name`.
 
 The tool supports custom report branding for exported Markdown and HTML reports.
 
-Report branding is optional. If no custom branding is provided, the reports use the default title:
+Report branding is optional. If no custom branding is provided through CLI arguments, the tool uses saved defaults from `config/analyst_profile.json`. If the profile file is missing or invalid, the reports use the built-in default title:
 
 ```text
 Encoded Command Analyzer Triage Report
@@ -713,8 +780,10 @@ encoded-command-analyzer/
 ├── detection_engine.py
 ├── report_exporter.py
 ├── template_loader.py
+├── profile_loader.py
 ├── config/
-│   └── keyword_rules.json
+│   ├── keyword_rules.json
+│   └── analyst_profile.json
 ├── templates/
 │   ├── sigma/
 │   │   └── suspicious_powershell_encodedcommand.yml
@@ -750,8 +819,10 @@ Build artifacts such as `build/`, `dist/`, and `*.spec` are intentionally exclud
 | `decoder_engine.py` | Decoding logic for Base64, UTF-16LE, URL, Hex, chained decoding, compressed Base64, and XOR Hex |
 | `detection_engine.py` | Suspicious keyword detection, configurable keyword loading, risk scoring, analysis logic, MITRE ATT&CK mapping, detection rule mapping, and detection template matching |
 | `template_loader.py` | Loads and matches YAML-based Sigma and Microsoft Sentinel detection templates |
-| `report_exporter.py` | JSON, CSV, Markdown, and HTML export functions |
+| `profile_loader.py` | Loads saved analyst and report profile defaults from `config/analyst_profile.json` |
+| `report_exporter.py` | JSON, CSV, Markdown, and HTML export functions with clean Case Context output |
 | `config/keyword_rules.json` | Configurable suspicious keyword rules |
+| `config/analyst_profile.json` | Saved analyst, organization, classification, and default report title values |
 | `templates/sigma/` | YAML-based Sigma detection templates |
 | `templates/sentinel/` | YAML-based Microsoft Sentinel KQL detection templates |
 | `samples/` | Sample input files for testing |
@@ -765,7 +836,7 @@ Build artifacts such as `build/`, `dist/`, and `*.spec` are intentionally exclud
 
 This project uses Python 3.x.
 
-Version 29 requires `PyYAML` for YAML template loading.
+Version 30 still requires `PyYAML` for YAML template loading.
 
 Install requirements:
 
@@ -1218,6 +1289,7 @@ Exported fields include:
 - Detection rule mappings
 - YAML detection templates
 - Detection coverage summary in Markdown and HTML reports
+- Clean Case Context sections that omit blank fields in Markdown and HTML reports
 
 ---
 
@@ -1229,7 +1301,7 @@ The generated Markdown triage report includes:
 - Optional organization
 - Optional classification label
 - Summary
-- Optional case context
+- Optional case context with blank fields automatically omitted
 - Detection coverage summary
 - Total results
 - Highest risk level
@@ -1259,7 +1331,7 @@ The generated HTML report includes:
 - Optional report information card
 - Optional organization and classification label
 - Executive-style summary
-- Optional case context
+- Optional case context with blank fields automatically omitted
 - Detection coverage summary
 - Highest risk level
 - Total result count
@@ -1293,8 +1365,8 @@ start output\triage_report.html
 1. Copy suspicious encoded command from an alert.
 2. Open Encoded Command Analyzer.
 3. Paste the encoded value or load a batch file.
-4. Add optional case context through CLI arguments or GUI fields when needed.
-5. Add optional report branding when producing formal reports.
+4. Add optional case context through CLI arguments, GUI fields, or saved analyst profile defaults when needed.
+5. Add optional report branding through CLI arguments or saved profile defaults when producing formal reports.
 6. Run analysis.
 7. Review decoded output.
 8. Review suspicious keyword matches.
@@ -1328,6 +1400,8 @@ This project can support:
 - Detection template library management
 - Detection coverage review
 - Branded report generation
+- Saved analyst profile defaults
+- Clean report context output
 - Portfolio demonstration for detection engineering roles
 - Case documentation and analyst reporting
 
@@ -1353,7 +1427,6 @@ It is not intended to execute decoded content.
 
 Planned upgrades:
 
-- Version 30: Add saved GUI analyst profiles or default report settings
 - Version 31: Add GUI report branding fields
 - Version 32: Add YAML template validation checks
 - Version 33: Add detection template metadata validation and linting
@@ -1361,6 +1434,19 @@ Planned upgrades:
 ---
 
 ## Version History
+
+### Version 30
+
+Added saved analyst profile defaults and cleaner report context output.
+
+New files:
+
+```text
+profile_loader.py
+config/analyst_profile.json
+```
+
+Version 30 allows saved defaults for analyst name, organization, classification, and default report title. CLI arguments override saved defaults when provided. Markdown and HTML reports now omit blank Case Context fields, and CSV analyst notes handling is consistent with exported report context.
 
 ### Version 29
 
