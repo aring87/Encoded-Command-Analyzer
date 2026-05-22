@@ -8,10 +8,11 @@
 ![MITRE ATT&CK](https://img.shields.io/badge/MITRE-ATT%26CK-orange)
 ![Detection Mapping](https://img.shields.io/badge/Detection-Rule%20Mapping-red)
 ![Templates](https://img.shields.io/badge/Templates-Sigma%20%7C%20Sentinel-blue)
-![YAML Templates](https://img.shields.io/badge/Templates-YAML%20Library-blue)
-![Analyst Profile](https://img.shields.io/badge/Profile-Analyst%20Defaults-blue)
+![YAML Templates](https://img.shields.io/badge/Templates-YAML-blue)
 ![Coverage](https://img.shields.io/badge/Coverage-Summary-success)
 ![Branding](https://img.shields.io/badge/Reports-Custom%20Branding-blue)
+![GUI Branding](https://img.shields.io/badge/GUI-Report%20Branding-blueviolet)
+![Analyst Profile](https://img.shields.io/badge/Profile-Analyst%20Defaults-informational)
 ![Configurable Rules](https://img.shields.io/badge/Rules-Configurable-blue)
 ![Case Context](https://img.shields.io/badge/Case-Context-informational)
 ![Exports](https://img.shields.io/badge/Exports-JSON%20%7C%20CSV%20%7C%20Markdown%20%7C%20HTML-yellow)
@@ -24,67 +25,55 @@
 
 **Encoded Command Analyzer** is a Python-based detection engineering utility for decoding and analyzing encoded command-line content.
 
-The tool helps security analysts and detection engineers triage suspicious commands, identify signs of PowerShell abuse, detect common obfuscation patterns, map findings to MITRE ATT&CK techniques, suggest related detection rule ideas, load starter Sigma and Microsoft Sentinel KQL templates from a YAML template library, summarize detection coverage, and produce analyst-friendly investigation reports with optional case context and custom report branding.
+The tool is designed to help security analysts, SOC analysts, malware triage analysts, and detection engineers decode suspicious commands, identify signs of PowerShell abuse, detect obfuscation patterns, map findings to MITRE ATT&CK techniques, suggest related detection rule ideas, load Sigma and Microsoft Sentinel KQL templates from a YAML template library, summarize detection coverage, and generate analyst-friendly reports.
 
-This project started as a simple Base64 decoder and has expanded into a lightweight encoded command analysis tool with CLI support, GUI support, batch file analysis, chained decoding, compressed Base64 support, XOR Hex decoding, suspicious keyword detection, configurable keyword rules, risk scoring, MITRE ATT&CK mapping, detection rule mapping, YAML-based detection template loading, detection coverage summaries, analyst-ready exports, unit testing, Windows executable packaging, HTML report generation, optional case context enrichment, and custom report branding.
+This project started as a simple Base64 decoder and has expanded into a lightweight encoded command analysis tool with CLI support, Tkinter GUI support, batch analysis, chained decoding, compressed Base64 support, XOR Hex decoding, suspicious keyword detection, configurable keyword rules, risk scoring, MITRE ATT&CK mapping, detection rule mapping, YAML-based detection templates, detection coverage summaries, saved analyst profile defaults, GUI report branding fields, analyst-ready exports, unit testing, Windows executable packaging, Markdown report generation, HTML report generation, optional case context enrichment, and custom report branding.
 
 ---
 
 ## Current Version
 
-**Version 30**
-
-### What Changed in Version 30
-
-Version 30 adds **saved analyst profile defaults** and cleaner report context output.
-
-The tool can now load default analyst and report branding values from:
-
-```text
-config/analyst_profile.json
-```
-
-This allows common report values such as analyst name, organization, classification, and default report title to be reused automatically without typing the same CLI arguments every time. CLI arguments still take priority, so analysts can override saved defaults when needed.
-
-Version 30 also improves exported reports by hiding blank case context fields in Markdown and HTML output. For example, if only the analyst name is provided, the report shows only the analyst field instead of empty Case ID, Alert Source, Hostname, Username, and Analyst Notes rows.
-
-Version 30 adds:
-
-- `profile_loader.py`
-- `config/analyst_profile.json`
-- Saved analyst default support
-- Saved organization default support
-- Saved classification default support
-- Saved default report title support
-- CLI override behavior for saved profile values
-- Cleaner Markdown Case Context output
-- Cleaner HTML Case Context output
-- CSV analyst notes consistency fix
-
-### Previous Version 29 Update
-
-Version 29 added a **YAML-based detection template library**.
-
-Earlier versions stored external detection templates in a single JSON file. Version 29 moved detection templates into individual YAML files organized by platform and template type.
-
-Template structure:
-
-```text
-templates/
-├── sigma/
-│   └── suspicious_powershell_encodedcommand.yml
-└── sentinel/
-    ├── powershell_encodedcommand.yml
-    ├── powershell_iex_usage.yml
-    ├── powershell_download_cradle.yml
-    └── command_shell_execution.yml
-```
-
-This makes the project easier to maintain, easier to expand, and more aligned with real detection engineering repositories. Analysts can add new Sigma or Microsoft Sentinel KQL templates without modifying the core Python detection logic.
+**Version 31**
 
 ---
 
-## Current Capabilities
+## What's New in Version 31
+
+Version 31 adds **GUI-based report branding fields**.
+
+Report branding was previously supported through CLI arguments and analyst profile defaults. Version 31 brings that same capability directly into the Tkinter GUI, allowing analysts to customize exported reports without using command-line options.
+
+New GUI report branding fields:
+
+- Report Title
+- Organization
+- Classification
+
+When populated in the GUI, these values are included in exported Markdown and HTML triage reports.
+
+Example GUI report branding:
+
+```text
+Report Title: Encoded PowerShell Triage Report
+Organization: RingForge Lab
+Classification: TLP:AMBER
+```
+
+Example exported report header:
+
+```markdown
+# Encoded PowerShell Triage Report
+
+**Organization:** RingForge Lab
+
+**Classification:** TLP:AMBER
+```
+
+This improves the GUI workflow for analysts who want clean, branded reports for investigations, portfolio artifacts, detection engineering labs, or SOC-style documentation.
+
+---
+
+## Version 31 Capabilities
 
 - Decode standard Base64 strings
 - Decode PowerShell UTF-16LE EncodedCommand values
@@ -107,10 +96,10 @@ This makes the project easier to maintain, easier to expand, and more aligned wi
 - Suggest related detection rule ideas
 - Identify possible log sources for detection engineering
 - Load Sigma detection templates from YAML files
-- Load Microsoft Sentinel KQL detection templates from YAML files
-- Manage detection templates without editing Python code
-- Add or modify templates under the `templates/` directory
-- Match detection templates based on decoded command content
+- Load Microsoft Sentinel KQL templates from YAML files
+- Organize detection templates by platform under `templates/`
+- Match decoded content to YAML detection templates using keywords
+- Include matched detection templates in CLI output and exported reports
 - Generate a detection coverage summary
 - Summarize MITRE ATT&CK techniques across all decoded results
 - Summarize detection rule ideas across all decoded results
@@ -118,14 +107,21 @@ This makes the project easier to maintain, easier to expand, and more aligned wi
 - Add optional case context from CLI arguments
 - Add optional case context directly from the GUI
 - Add optional analyst notes to exported reports
+- Load saved analyst defaults from `config/analyst_profile.json`
+- Load saved organization defaults from `config/analyst_profile.json`
+- Load saved classification defaults from `config/analyst_profile.json`
+- Load saved default report title from `config/analyst_profile.json`
+- Override saved analyst profile defaults with CLI arguments
 - Add custom report titles to exported Markdown and HTML reports
 - Add organization, team, or lab name to exported reports
 - Add report classification or handling labels to exported reports
-- Load saved analyst profile defaults from `config/analyst_profile.json`
-- Load saved organization, classification, and default report title values
-- Override saved analyst profile values with CLI arguments when needed
+- Add report branding fields directly from the Tkinter GUI
+- Add custom report title from the GUI
+- Add organization, team, or lab name from the GUI
+- Add report classification or handling label from the GUI
+- Export GUI-entered report branding to Markdown and HTML reports
+- Remove blank Case Context fields from Markdown and HTML reports
 - Generate branded analyst-ready reports for portfolio or SOC-style documentation
-- Hide blank case context fields in Markdown and HTML reports
 - Export GUI-entered case context to JSON, CSV, Markdown, and HTML reports
 - Export analysis results to JSON
 - Export analysis results to CSV
@@ -153,13 +149,14 @@ Encoded and obfuscated commands are commonly seen during security investigations
 - Command-line obfuscation
 - Malware staging
 - Initial access activity
-- Execution and defense evasion activity
+- Execution activity
+- Defense evasion activity
 - SIEM and EDR alert investigation
 - Compressed payload delivery
 - Chained encoding and obfuscation
 - Lightweight XOR-obfuscated strings
 
-This tool provides a simple way to decode suspicious content and quickly review indicators that may be useful during triage, detection engineering, and incident response.
+This tool provides a simple way to decode suspicious content and quickly review indicators that may be useful during triage, detection engineering, malware analysis support, and incident response.
 
 ---
 
@@ -183,13 +180,10 @@ This tool provides a simple way to decode suspicious content and quickly review 
 
 The tool supports optional analyst case context fields.
 
-Case context can be provided through CLI arguments, GUI fields, or saved analyst profile defaults. Markdown and HTML reports automatically hide blank case context fields so exported reports stay clean and readable.
-
-Case context can be added in three ways:
+Case context is optional and can be provided in two ways:
 
 1. Through CLI arguments
 2. Through the Tkinter GUI case context fields
-3. Through saved defaults in `config/analyst_profile.json`
 
 Supported case fields:
 
@@ -201,6 +195,8 @@ Supported case fields:
 | Hostname | `--hostname` | Hostname |
 | Username | `--username` | Username |
 | Analyst Notes | `--notes` | Analyst Notes |
+
+Blank case context fields are automatically removed from Markdown and HTML reports. This keeps reports cleaner and prevents empty fields from appearing.
 
 ### CLI Case Context Example
 
@@ -230,17 +226,15 @@ output/triage_report.md
 output/triage_report.html
 ```
 
-If a field is blank, Markdown and HTML reports omit that field from the Case Context section.
-
-For public examples, use generic values such as `SOC Analyst` or `Analyst Name`.
+If fields are left blank, they are not shown in Markdown or HTML reports.
 
 ---
 
 ## Analyst Profile Defaults
 
-Version 30 adds support for saved analyst and report defaults.
+Version 30 added saved analyst profile defaults.
 
-Default values are loaded from:
+Analyst profile settings are loaded from:
 
 ```text
 config/analyst_profile.json
@@ -257,24 +251,34 @@ Example profile:
 }
 ```
 
-Supported profile fields:
+These values can be used automatically when running exports.
 
-| Field | Purpose | CLI Override |
-|---|---|---|
-| `analyst` | Default analyst name for case context | `--analyst` |
-| `organization` | Default organization, team, or lab name for reports | `--organization` |
-| `classification` | Default handling label for reports | `--classification` |
-| `default_report_title` | Default title for Markdown and HTML reports | `--report-title` |
+Supported analyst profile fields:
+
+| Field | Purpose |
+|---|---|
+| `analyst` | Default analyst name |
+| `organization` | Default organization, team, or lab name |
+| `classification` | Default classification or handling label |
+| `default_report_title` | Default Markdown and HTML report title |
+
+CLI arguments override analyst profile defaults.
 
 Priority order:
 
 ```text
-1. CLI arguments
-2. config/analyst_profile.json
-3. Safe built-in defaults
+1. CLI argument
+2. analyst_profile.json default
+3. built-in fallback default
 ```
 
-This means an analyst can store normal defaults in the profile file but still override them during a specific investigation.
+Example:
+
+```powershell
+python base64_decoder.py --input "SGVsbG8gd29ybGQ=" --export --analyst "Adam Ring" --organization "RingForge Lab" --classification "TLP:AMBER"
+```
+
+This uses the CLI-provided values instead of the saved profile defaults.
 
 ---
 
@@ -282,21 +286,27 @@ This means an analyst can store normal defaults in the profile file but still ov
 
 The tool supports custom report branding for exported Markdown and HTML reports.
 
-Report branding is optional. If no custom branding is provided through CLI arguments, the tool uses saved defaults from `config/analyst_profile.json`. If the profile file is missing or invalid, the reports use the built-in default title:
+Report branding is optional. If no custom branding is provided, the reports use the default title:
 
 ```text
 Encoded Command Analyzer Triage Report
 ```
 
+Custom branding can be provided in three ways:
+
+1. Through CLI arguments
+2. Through saved analyst profile defaults in `config/analyst_profile.json`
+3. Through the Tkinter GUI report branding fields
+
 Custom branding can include:
 
-| Field | CLI Argument | Purpose |
-|---|---|---|
-| Report Title | `--report-title` | Custom title for the exported report |
-| Organization | `--organization` | Organization, team, or lab name |
-| Classification | `--classification` | Handling label such as Internal Use Only |
+| Field | CLI Argument | GUI Field | Analyst Profile Key | Purpose |
+|---|---|---|---|---|
+| Report Title | `--report-title` | Report Title | `default_report_title` | Custom title for the exported report |
+| Organization | `--organization` | Organization | `organization` | Organization, team, or lab name |
+| Classification | `--classification` | Classification | `classification` | Handling label such as Internal Use Only or TLP:AMBER |
 
-Example:
+### CLI Report Branding Example
 
 ```powershell
 python base64_decoder.py --input "cG93ZXJzaGVsbCUyRWV4ZSUyMC1lbmMlMjBJRVg=" --export --report-title "Encoded PowerShell Triage Report" --organization "Detection Engineering Lab" --classification "Internal Use Only"
@@ -308,6 +318,34 @@ The exported Markdown and HTML reports will show:
 Encoded PowerShell Triage Report
 Organization: Detection Engineering Lab
 Classification: Internal Use Only
+```
+
+### GUI Report Branding Example
+
+The GUI includes a Report Branding section with the following fields:
+
+```text
+Report Title
+Organization
+Classification
+```
+
+Example values:
+
+```text
+Report Title: Encoded PowerShell Triage Report
+Organization: RingForge Lab
+Classification: TLP:AMBER
+```
+
+When results are exported, the Markdown and HTML reports include:
+
+```markdown
+# Encoded PowerShell Triage Report
+
+**Organization:** RingForge Lab
+
+**Classification:** TLP:AMBER
 ```
 
 This helps produce cleaner SOC-style reports, portfolio artifacts, and professional investigation documentation.
@@ -419,15 +457,9 @@ Detection rule mappings are suggestions and should be tuned for the target envir
 
 ## YAML Detection Template Library
 
-Version 29 uses a YAML-based detection template library.
+Version 29 added a YAML-based detection template library.
 
-Detection templates are loaded from:
-
-```text
-templates/
-```
-
-Expected structure:
+Detection templates are now organized under:
 
 ```text
 templates/
@@ -439,6 +471,8 @@ templates/
     ├── powershell_download_cradle.yml
     └── command_shell_execution.yml
 ```
+
+This allows detection engineers to add, remove, or modify Sigma and Microsoft Sentinel KQL templates without editing the Python source code.
 
 Each YAML template can include:
 
@@ -478,44 +512,16 @@ output/triage_report.md
 output/triage_report.html
 ```
 
-The YAML loader is implemented in:
-
-```text
-template_loader.py
-```
-
-The detection engine calls the YAML loader with:
-
-```python
-detection_templates = match_yaml_detection_templates(decoded_text)
-```
-
-This keeps the same `detection_templates` output field while changing the source of template content from a single JSON file to a structured YAML library.
-
-### Validate YAML Templates
-
-To validate a YAML file, run:
-
-```powershell
-python -c "import yaml; yaml.safe_load(open('templates\\sentinel\\powershell_iex_usage.yml', encoding='utf-8')); print('YAML valid')"
-```
-
-To validate all YAML templates quickly:
-
-```powershell
-python -c "import os, yaml; [yaml.safe_load(open(os.path.join(r, f), encoding='utf-8')) for r, _, fs in os.walk('templates') for f in fs if f.endswith(('.yml', '.yaml'))]; print('All YAML templates valid')"
-```
-
 ---
 
 ## Detection Templates
 
-The tool can suggest starter detection templates.
+The tool can suggest starter detection templates when suspicious decoded content matches known patterns.
 
-When suspicious decoded content matches known patterns, the tool can suggest templates such as:
+Supported template types include:
 
-- Sigma rules
-- Microsoft Sentinel KQL queries
+- Sigma
+- Microsoft Sentinel KQL
 
 Example decoded command:
 
@@ -538,7 +544,6 @@ Detection templates may include:
 - Severity
 - Description
 - Query or rule body
-- Source YAML file
 
 These templates are intended as starting points and should be reviewed, tested, and tuned before production use.
 
@@ -554,7 +559,7 @@ It summarizes:
 
 - MITRE ATT&CK techniques identified
 - Detection rule ideas suggested
-- Detection templates matched
+- Detection templates generated
 
 Example coverage summary:
 
@@ -694,6 +699,9 @@ The project includes a Tkinter-based GUI that allows analysts to:
 - Load a batch file
 - Add optional case context fields
 - Add analyst notes from the GUI
+- Add custom report title from the GUI
+- Add organization or lab name from the GUI
+- Add classification or handling label from the GUI
 - Review decoded output
 - Review suspicious keyword matches
 - View risk score and reasons
@@ -701,6 +709,7 @@ The project includes a Tkinter-based GUI that allows analysts to:
 - Review detection rule mappings
 - Review detection templates
 - Include GUI-entered case context in exported reports
+- Export GUI-entered branding to Markdown and HTML reports
 - Export results to JSON, CSV, Markdown, and HTML
 - Clear and rerun analysis
 
@@ -712,6 +721,8 @@ The GUI includes a color-coded risk banner:
 | Medium | Suspicious behavior detected |
 | Low | Minor indicators detected |
 | None | No suspicious keywords detected |
+
+The GUI includes a dedicated **Report Branding** section. These fields allow analysts to customize the report title, organization, and classification label before exporting results. This provides feature parity with CLI-based report branding while keeping the workflow analyst-friendly.
 
 ---
 
@@ -749,6 +760,12 @@ python base64_decoder.py --input "cG93ZXJzaGVsbCUyRWV4ZSUyMC1lbmMlMjBJRVg=" --ex
 python base64_decoder.py --input "cG93ZXJzaGVsbCUyRWV4ZSUyMC1lbmMlMjBJRVg=" --export --report-title "Encoded PowerShell Triage Report" --organization "Detection Engineering Lab" --classification "Internal Use Only"
 ```
 
+### Analyze with CLI Override of Analyst Profile Defaults
+
+```powershell
+python base64_decoder.py --input "SGVsbG8gd29ybGQ=" --export --analyst "Adam Ring" --organization "RingForge Lab" --classification "TLP:AMBER"
+```
+
 ### Analyze a Batch File
 
 ```powershell
@@ -765,6 +782,12 @@ python base64_decoder.py --file samples\sample_batch.txt --export
 
 ```powershell
 python base64_decoder.py --gui
+```
+
+Or:
+
+```powershell
+python encoded_command_gui.py
 ```
 
 ---
@@ -803,32 +826,31 @@ encoded-command-analyzer/
 │   ├── triage_report.md
 │   └── triage_report.html
 ├── README.md
-├── requirements.txt
 ├── LICENSE
 └── .gitignore
 ```
 
 Build artifacts such as `build/`, `dist/`, and `*.spec` are intentionally excluded from source control.
 
-### File Purpose
+---
+
+## File Purpose
 
 | File | Purpose |
 |---|---|
 | `base64_decoder.py` | CLI entry point and command-line argument handler |
-| `encoded_command_gui.py` | Tkinter GUI entry point |
+| `encoded_command_gui.py` | Tkinter GUI entry point, including case context and GUI report branding fields |
 | `decoder_engine.py` | Decoding logic for Base64, UTF-16LE, URL, Hex, chained decoding, compressed Base64, and XOR Hex |
-| `detection_engine.py` | Suspicious keyword detection, configurable keyword loading, risk scoring, analysis logic, MITRE ATT&CK mapping, detection rule mapping, and detection template matching |
-| `template_loader.py` | Loads and matches YAML-based Sigma and Microsoft Sentinel detection templates |
-| `profile_loader.py` | Loads saved analyst and report profile defaults from `config/analyst_profile.json` |
-| `report_exporter.py` | JSON, CSV, Markdown, and HTML export functions with clean Case Context output |
+| `detection_engine.py` | Suspicious keyword detection, configurable keyword loading, risk scoring, analysis logic, MITRE ATT&CK mapping, detection rule mapping, and YAML detection template matching |
+| `report_exporter.py` | JSON, CSV, Markdown, and HTML export functions, including cleaned case context and branded report output |
+| `template_loader.py` | Loads YAML-based Sigma and Microsoft Sentinel detection templates |
+| `profile_loader.py` | Loads saved analyst profile defaults from `config/analyst_profile.json` |
 | `config/keyword_rules.json` | Configurable suspicious keyword rules |
-| `config/analyst_profile.json` | Saved analyst, organization, classification, and default report title values |
-| `templates/sigma/` | YAML-based Sigma detection templates |
-| `templates/sentinel/` | YAML-based Microsoft Sentinel KQL detection templates |
+| `config/analyst_profile.json` | Saved analyst name, organization, classification, and default report title values |
+| `templates/` | YAML-based detection template library |
 | `samples/` | Sample input files for testing |
 | `tests/` | Unit tests for decoder and detection logic |
 | `output/` | Stores exported analysis results and triage reports |
-| `requirements.txt` | Python package dependencies such as `pyyaml` |
 
 ---
 
@@ -836,24 +858,16 @@ Build artifacts such as `build/`, `dist/`, and `*.spec` are intentionally exclud
 
 This project uses Python 3.x.
 
-Version 30 still requires `PyYAML` for YAML template loading.
+Required external packages:
+
+```text
+pyyaml
+```
 
 Install requirements:
 
 ```powershell
-pip install -r requirements.txt
-```
-
-Or install PyYAML directly:
-
-```powershell
 pip install pyyaml
-```
-
-Example `requirements.txt`:
-
-```text
-pyyaml
 ```
 
 For Windows executable packaging, PyInstaller is required:
@@ -886,7 +900,6 @@ The tests validate:
 - Suspicious keyword detection
 - Risk scoring
 - MITRE ATT&CK mapping
-- YAML detection template loading
 
 Run all tests from the project root:
 
@@ -998,6 +1011,9 @@ Expected result:
 Risk Level: None
 Score: 0
 No suspicious keywords found.
+No MITRE techniques identified.
+No detection rule ideas identified.
+No detection templates identified.
 ```
 
 ---
@@ -1039,10 +1055,6 @@ Detection Templates:
 - Sigma: Suspicious PowerShell EncodedCommand
 - Microsoft Sentinel KQL: PowerShell EncodedCommand Execution
 - Microsoft Sentinel KQL: PowerShell Invoke-Expression Usage
-
-Detection Coverage Summary:
-- T1059.001 - PowerShell
-- T1027 - Obfuscated Files or Information
 ```
 
 ---
@@ -1287,9 +1299,8 @@ Exported fields include:
 - Risk reasons
 - MITRE ATT&CK mappings
 - Detection rule mappings
-- YAML detection templates
+- Detection templates
 - Detection coverage summary in Markdown and HTML reports
-- Clean Case Context sections that omit blank fields in Markdown and HTML reports
 
 ---
 
@@ -1301,7 +1312,7 @@ The generated Markdown triage report includes:
 - Optional organization
 - Optional classification label
 - Summary
-- Optional case context with blank fields automatically omitted
+- Optional case context
 - Detection coverage summary
 - Total results
 - Highest risk level
@@ -1313,7 +1324,9 @@ The generated Markdown triage report includes:
 - Risk reasons
 - MITRE ATT&CK mappings
 - Detection rule mappings
-- YAML detection templates
+- Detection templates
+
+Blank case context fields are automatically removed.
 
 The report is saved to:
 
@@ -1331,7 +1344,7 @@ The generated HTML report includes:
 - Optional report information card
 - Optional organization and classification label
 - Executive-style summary
-- Optional case context with blank fields automatically omitted
+- Optional case context
 - Detection coverage summary
 - Highest risk level
 - Total result count
@@ -1342,8 +1355,10 @@ The generated HTML report includes:
 - Risk score and reasons
 - MITRE ATT&CK mappings
 - Detection rule mappings
-- YAML detection templates
+- Detection templates
 - Dark-themed browser-friendly formatting
+
+Blank case context fields are automatically removed.
 
 The report is saved to:
 
@@ -1363,17 +1378,17 @@ start output\triage_report.html
 
 ```text
 1. Copy suspicious encoded command from an alert.
-2. Open Encoded Command Analyzer.
+2. Open Encoded Command Analyzer through the CLI or GUI.
 3. Paste the encoded value or load a batch file.
-4. Add optional case context through CLI arguments, GUI fields, or saved analyst profile defaults when needed.
-5. Add optional report branding through CLI arguments or saved profile defaults when producing formal reports.
+4. Add optional case context through CLI arguments or GUI fields when needed.
+5. Add optional report branding through CLI arguments, analyst profile defaults, or GUI fields.
 6. Run analysis.
 7. Review decoded output.
 8. Review suspicious keyword matches.
 9. Review risk score and reasons.
 10. Review MITRE ATT&CK mappings.
 11. Review detection rule mappings.
-12. Review matched Sigma or Sentinel YAML templates.
+12. Review suggested Sigma or Sentinel detection templates.
 13. Review the detection coverage summary.
 14. Export results to JSON, CSV, Markdown, or HTML.
 15. Attach output to triage notes or investigation documentation.
@@ -1397,11 +1412,9 @@ This project can support:
 - Detection rule development
 - Sigma rule drafting
 - Microsoft Sentinel KQL drafting
-- Detection template library management
+- YAML detection template management
 - Detection coverage review
 - Branded report generation
-- Saved analyst profile defaults
-- Clean report context output
 - Portfolio demonstration for detection engineering roles
 - Case documentation and analyst reporting
 
@@ -1423,78 +1436,115 @@ It is not intended to execute decoded content.
 
 ---
 
-## Roadmap
-
-Planned upgrades:
-
-- Version 31: Add GUI report branding fields
-- Version 32: Add YAML template validation checks
-- Version 33: Add detection template metadata validation and linting
-
----
-
 ## Version History
+
+### Version 31
+
+Added GUI report branding fields.
+
+New GUI fields:
+
+- Report Title
+- Organization
+- Classification
+
+These values are exported into Markdown and HTML reports when populated in the GUI.
+
+Version 31 improves feature parity between CLI and GUI workflows by allowing analysts to generate branded reports directly from the graphical interface.
 
 ### Version 30
 
-Added saved analyst profile defaults and cleaner report context output.
+Added saved analyst profile defaults.
 
-New files:
+New file:
 
 ```text
-profile_loader.py
 config/analyst_profile.json
 ```
 
-Version 30 allows saved defaults for analyst name, organization, classification, and default report title. CLI arguments override saved defaults when provided. Markdown and HTML reports now omit blank Case Context fields, and CSV analyst notes handling is consistent with exported report context.
+New loader:
+
+```text
+profile_loader.py
+```
+
+Version 30 supports saved defaults for:
+
+- Analyst
+- Organization
+- Classification
+- Default report title
+
+CLI arguments override saved profile defaults.
+
+Version 30 also improved report output by removing blank Case Context fields from Markdown and HTML reports and fixing analyst notes handling in CSV, Markdown, and HTML exports.
 
 ### Version 29
 
 Added YAML-based detection template library.
 
-New files and folders:
+New template structure:
 
 ```text
-template_loader.py
 templates/
 ├── sigma/
+│   └── suspicious_powershell_encodedcommand.yml
 └── sentinel/
+    ├── powershell_encodedcommand.yml
+    ├── powershell_iex_usage.yml
+    ├── powershell_download_cradle.yml
+    └── command_shell_execution.yml
 ```
 
-Version 29 moves detection template content into individual YAML files. This gives the project a more realistic detection engineering layout and makes templates easier to add, review, and maintain.
+Detection templates are now loaded from YAML files instead of being stored in a single JSON configuration file.
 
 ### Version 28
 
-Added external detection templates through a JSON config file.
+Added external detection template support.
+
+Detection templates were loaded from:
 
 ```text
 config/detection_templates.json
 ```
 
-Version 28 allowed Sigma and Microsoft Sentinel KQL templates to be managed outside of Python code.
+This allowed Sigma and Microsoft Sentinel KQL templates to be modified without editing Python source code.
 
 ### Version 27
 
-Added custom report branding through CLI arguments:
+Added custom report branding through CLI.
 
-```text
---report-title
---organization
---classification
-```
+New CLI arguments:
+
+- `--report-title`
+- `--organization`
+- `--classification`
+
+Markdown and HTML reports show:
+
+- Report Title
+- Organization
+- Classification
 
 ### Version 26
 
-Added GUI case context fields:
+Added GUI case context fields.
 
-```text
-Case ID
-Analyst
-Alert Source
-Hostname
-Username
-Analyst Notes
-```
+Fields:
+
+- Case ID
+- Analyst
+- Alert Source
+- Hostname
+- Username
+- Analyst Notes
+
+These export to:
+
+- JSON
+- CSV
+- Markdown
+- HTML
 
 ### Version 25
 
@@ -1502,22 +1552,48 @@ Added Detection Coverage Summary.
 
 Coverage summary includes:
 
-- MITRE ATT&CK techniques covered
+- MITRE Techniques Covered
+- Detection Rule Ideas
+- Detection Templates
+
+It appears in:
+
+- CLI output
+- Markdown reports
+- HTML reports
+
+### Earlier Versions
+
+Earlier versions added:
+
+- Base64 decoding
+- UTF-8 and UTF-16LE handling
+- Suspicious keyword detection
+- Tkinter GUI support
+- Batch file analysis
+- URL decoding
+- Hex decoding
+- Chained decoding
+- Risk scoring
+- MITRE ATT&CK mapping
 - Detection rule ideas
-- Detection templates
+- JSON export
+- CSV export
+- Markdown export
+- HTML export
+- XOR Hex decoding
+- Gzip and Deflate Base64 decoding
 
 ---
 
-## Git Commit
+## Roadmap
 
-After updating the code, templates, and README:
+Planned upgrades:
 
-```powershell
-git status
-git add .
-git commit -m "Add YAML-based detection template library"
-git push
-```
+- Version 32: Add template validation checks
+- Version 33: Add GUI analyst profile loading and save profile option
+- Version 34: Add export folder selection
+- Version 35: Add detection template editor or viewer
 
 ---
 
