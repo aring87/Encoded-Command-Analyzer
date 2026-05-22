@@ -1,49 +1,120 @@
 import csv
 import json
 import os
+from html import escape
+
 
 def build_detection_coverage_summary(analysis_results):
-    mitre_techniques = {}
-    detection_rules = {}
-    detection_templates = {}
+    """
+    Builds a summary of MITRE techniques, detection rule ideas,
+    and detection templates across all analysis results.
+    """
+
+    coverage_summary = {
+        "mitre_techniques": {},
+        "detection_rules": {},
+        "detection_templates": {}
+    }
 
     for result in analysis_results:
         for technique in result.get("mitre_attack", []):
             technique_id = technique.get("technique_id", "")
-            technique_name = technique.get("technique_name", "")
-            tactic = technique.get("tactic", "")
 
             if technique_id:
-                mitre_techniques[technique_id] = {
-                    "technique_name": technique_name,
-                    "tactic": tactic
+                coverage_summary["mitre_techniques"][technique_id] = {
+                    "technique_name": technique.get("technique_name", ""),
+                    "tactic": technique.get("tactic", "")
                 }
 
         for rule in result.get("detection_rules", []):
             rule_name = rule.get("rule_name", "")
-            severity = rule.get("severity", "")
 
             if rule_name:
-                detection_rules[rule_name] = severity
+                coverage_summary["detection_rules"][rule_name] = rule.get("severity", "")
 
         for template in result.get("detection_templates", []):
             template_name = template.get("template_name", "")
-            template_type = template.get("template_type", "")
-            severity = template.get("severity", "")
 
             if template_name:
-                detection_templates[template_name] = {
-                    "template_type": template_type,
-                    "severity": severity
+                coverage_summary["detection_templates"][template_name] = {
+                    "template_type": template.get("template_type", ""),
+                    "severity": template.get("severity", "")
                 }
 
-    return {
-        "mitre_techniques": mitre_techniques,
-        "detection_rules": detection_rules,
-        "detection_templates": detection_templates
+    return coverage_summary
+
+
+def get_highest_risk_summary(analysis_results):
+    """
+    Returns the highest risk level and highest score across all analysis results.
+    """
+
+    highest_score = 0
+    highest_risk = "None"
+
+    for result in analysis_results:
+        score = result.get("risk_score", 0)
+
+        if score > highest_score:
+            highest_score = score
+            highest_risk = result.get("risk_level", "None")
+
+    return highest_risk, highest_score
+
+
+def get_report_branding(analysis_results):
+    """
+    Gets report branding from the first result that contains it.
+    """
+
+    for result in analysis_results:
+        if result.get("report_branding"):
+            return result.get("report_branding", {})
+
+    return {}
+
+
+def get_case_context(analysis_results):
+    """
+    Gets case context from the first result that contains it.
+    """
+
+    for result in analysis_results:
+        if result.get("case_context"):
+            return result.get("case_context", {})
+
+    return {}
+
+
+def get_visible_case_context(case_context):
+    """
+    Returns only case context fields that have values.
+    This prevents blank fields from appearing in Markdown and HTML reports.
+    """
+
+    case_context_fields = {
+        "Case ID": case_context.get("case_id", ""),
+        "Analyst": case_context.get("analyst", ""),
+        "Alert Source": case_context.get("alert_source", ""),
+        "Hostname": case_context.get("hostname", ""),
+        "Username": case_context.get("username", ""),
+        "Analyst Notes": case_context.get("notes", "") or case_context.get("analyst_notes", "")
     }
 
+    visible_case_context = {
+        label: value
+        for label, value in case_context_fields.items()
+        if value
+    }
+
+    return visible_case_context
+
+
 def export_to_json(analysis_results):
+    """
+    Exports full analysis results to JSON.
+    """
+
     os.makedirs("output", exist_ok=True)
 
     file_path = "output/analysis_result.json"
@@ -55,6 +126,10 @@ def export_to_json(analysis_results):
 
 
 def export_to_csv(analysis_results):
+    """
+    Exports flattened analysis results to CSV.
+    """
+
     os.makedirs("output", exist_ok=True)
 
     file_path = "output/analysis_result.csv"
@@ -103,14 +178,15 @@ def export_to_csv(analysis_results):
                     f"{rule.get('rule_name')} ({rule.get('severity')})"
                 )
 
-            case_context = result.get("case_context", {})
-
             detection_template_values = []
 
             for template in result.get("detection_templates", []):
                 detection_template_values.append(
-                    f"{template.get('template_name')} ({template.get('template_type')} - {template.get('severity')})"
+                    f"{template.get('template_name')} "
+                    f"({template.get('template_type')} - {template.get('severity')})"
                 )
+
+            case_context = result.get("case_context", {})
 
             writer.writerow({
                 "timestamp": result.get("timestamp", ""),
@@ -119,7 +195,7 @@ def export_to_csv(analysis_results):
                 "alert_source": case_context.get("alert_source", ""),
                 "hostname": case_context.get("hostname", ""),
                 "username": case_context.get("username", ""),
-                "analyst_notes": case_context.get("analyst_notes", ""),
+                "analyst_notes": case_context.get("notes", "") or case_context.get("analyst_notes", ""),
                 "batch_item": result.get("batch_item", ""),
                 "source_file": result.get("source_file", ""),
                 "original_input": result.get("original_input", ""),
@@ -137,35 +213,30 @@ def export_to_csv(analysis_results):
             })
 
     return file_path
-    
+
+
 def export_to_markdown(analysis_results):
+    """
+    Exports analyst-friendly triage report to Markdown.
+    Blank case context fields are automatically removed.
+    """
+
     os.makedirs("output", exist_ok=True)
 
     file_path = "output/triage_report.md"
 
-    highest_score = 0
-    highest_risk = "None"
+    highest_risk, highest_score = get_highest_risk_summary(analysis_results)
+    report_branding = get_report_branding(analysis_results)
+    case_context = get_case_context(analysis_results)
+    visible_case_context = get_visible_case_context(case_context)
+    coverage_summary = build_detection_coverage_summary(analysis_results)
 
-    for result in analysis_results:
-        score = result.get("risk_score", 0)
-
-        if score > highest_score:
-            highest_score = score
-            highest_risk = result.get("risk_level", "None")
+    report_title = report_branding.get(
+        "report_title",
+        "Encoded Command Analyzer Triage Report"
+    )
 
     with open(file_path, "w", encoding="utf-8") as file:
-        report_branding = {}
-
-        for result in analysis_results:
-            if result.get("report_branding"):
-                report_branding = result.get("report_branding", {})
-                break
-
-        report_title = report_branding.get(
-            "report_title",
-            "Encoded Command Analyzer Triage Report"
-        )
-
         file.write(f"# {report_title}\n\n")
 
         if report_branding.get("organization"):
@@ -180,26 +251,16 @@ def export_to_markdown(analysis_results):
         file.write(f"- Total Results: {len(analysis_results)}\n")
         file.write(f"- Highest Risk: {highest_risk}\n")
         file.write(f"- Highest Score: {highest_score}\n\n")
-        
-        case_context = {}
 
-        for result in analysis_results:
-            if result.get("case_context"):
-                case_context = result.get("case_context", {})
-                break
-
-        if case_context:
+        if visible_case_context:
             file.write("## Case Context\n\n")
-            file.write(f"- Case ID: {case_context.get('case_id', '')}\n")
-            file.write(f"- Analyst: {case_context.get('analyst', '')}\n")
-            file.write(f"- Alert Source: {case_context.get('alert_source', '')}\n")
-            file.write(f"- Hostname: {case_context.get('hostname', '')}\n")
-            file.write(f"- Username: {case_context.get('username', '')}\n")
-            file.write(f"- Analyst Notes: {case_context.get('analyst_notes', '')}\n\n")
+
+            for label, value in visible_case_context.items():
+                file.write(f"- {label}: {value}\n")
+
+            file.write("\n")
 
         file.write("---\n\n")
-        
-        coverage_summary = build_detection_coverage_summary(analysis_results)
 
         file.write("## Detection Coverage Summary\n\n")
 
@@ -254,7 +315,6 @@ def export_to_markdown(analysis_results):
             file.write("```\n\n")
 
             file.write("### Suspicious Keywords\n\n")
-
             suspicious_keywords = result.get("suspicious_keywords", [])
 
             if suspicious_keywords:
@@ -270,7 +330,6 @@ def export_to_markdown(analysis_results):
             file.write(f"- Score: {result.get('risk_score', 0)}\n\n")
 
             file.write("### Risk Reasons\n\n")
-
             reasons = result.get("reasons", [])
 
             if reasons:
@@ -282,7 +341,6 @@ def export_to_markdown(analysis_results):
             file.write("\n")
 
             file.write("### MITRE ATT&CK Mapping\n\n")
-
             mitre_attack = result.get("mitre_attack", [])
 
             if mitre_attack:
@@ -299,7 +357,6 @@ def export_to_markdown(analysis_results):
             file.write("\n")
 
             file.write("### Detection Rule Mapping\n\n")
-
             detection_rules = result.get("detection_rules", [])
 
             if detection_rules:
@@ -311,11 +368,10 @@ def export_to_markdown(analysis_results):
                     file.write(f"  - Reason: {rule.get('reason')}\n")
             else:
                 file.write("- No detection rule mappings identified.\n")
-                
+
             file.write("\n")
 
             file.write("### Detection Templates\n\n")
-
             detection_templates = result.get("detection_templates", [])
 
             if detection_templates:
@@ -332,381 +388,360 @@ def export_to_markdown(analysis_results):
                 file.write("- No detection templates identified.\n")
 
             file.write("\n---\n\n")
-        
+
     return file_path
-    
+
+
 def export_to_html(analysis_results):
+    """
+    Exports analyst-friendly triage report to HTML.
+    Blank case context fields are automatically removed.
+    """
+
     os.makedirs("output", exist_ok=True)
 
     file_path = "output/triage_report.html"
 
-    highest_score = 0
-    highest_risk = "None"
+    highest_risk, highest_score = get_highest_risk_summary(analysis_results)
+    report_branding = get_report_branding(analysis_results)
+    case_context = get_case_context(analysis_results)
+    visible_case_context = get_visible_case_context(case_context)
+    coverage_summary = build_detection_coverage_summary(analysis_results)
 
-    for result in analysis_results:
-        score = result.get("risk_score", 0)
+    report_title = report_branding.get(
+        "report_title",
+        "Encoded Command Analyzer Triage Report"
+    )
 
-        if score > highest_score:
-            highest_score = score
-            highest_risk = result.get("risk_level", "None")
+    organization = report_branding.get("organization", "")
+    classification = report_branding.get("classification", "")
 
-    def escape_html(value):
-        return (
-            str(value)
-            .replace("&", "&amp;")
-            .replace("<", "&lt;")
-            .replace(">", "&gt;")
+    html_parts = []
+
+    html_parts.append("<!DOCTYPE html>")
+    html_parts.append("<html lang='en'>")
+    html_parts.append("<head>")
+    html_parts.append("<meta charset='UTF-8'>")
+    html_parts.append("<meta name='viewport' content='width=device-width, initial-scale=1.0'>")
+    html_parts.append(f"<title>{escape(report_title)}</title>")
+    html_parts.append("""
+<style>
+body {
+    background-color: #0f172a;
+    color: #e5e7eb;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+.container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px;
+}
+.header {
+    background-color: #111827;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+}
+.card {
+    background-color: #111827;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+h1, h2, h3 {
+    color: #f8fafc;
+}
+.meta {
+    color: #cbd5e1;
+}
+.badge {
+    display: inline-block;
+    background-color: #1e293b;
+    border: 1px solid #475569;
+    border-radius: 999px;
+    padding: 6px 10px;
+    margin: 4px 4px 4px 0;
+}
+pre {
+    background-color: #020617;
+    color: #e5e7eb;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 14px;
+    overflow-x: auto;
+}
+code {
+    white-space: pre-wrap;
+}
+ul {
+    line-height: 1.7;
+}
+hr {
+    border: none;
+    border-top: 1px solid #334155;
+    margin: 24px 0;
+}
+.risk-high {
+    color: #f87171;
+    font-weight: bold;
+}
+.risk-medium {
+    color: #fbbf24;
+    font-weight: bold;
+}
+.risk-low {
+    color: #60a5fa;
+    font-weight: bold;
+}
+.risk-none {
+    color: #34d399;
+    font-weight: bold;
+}
+</style>
+""")
+    html_parts.append("</head>")
+    html_parts.append("<body>")
+    html_parts.append("<div class='container'>")
+
+    html_parts.append("<div class='header'>")
+    html_parts.append(f"<h1>{escape(report_title)}</h1>")
+
+    if organization:
+        html_parts.append(f"<p><strong>Organization:</strong> {escape(organization)}</p>")
+
+    if classification:
+        html_parts.append(f"<p><strong>Classification:</strong> {escape(classification)}</p>")
+
+    html_parts.append("</div>")
+
+    html_parts.append("<div class='card'>")
+    html_parts.append("<h2>Summary</h2>")
+    html_parts.append("<ul>")
+    html_parts.append(f"<li><strong>Total Results:</strong> {len(analysis_results)}</li>")
+    html_parts.append(f"<li><strong>Highest Risk:</strong> {escape(str(highest_risk))}</li>")
+    html_parts.append(f"<li><strong>Highest Score:</strong> {escape(str(highest_score))}</li>")
+    html_parts.append("</ul>")
+    html_parts.append("</div>")
+
+    if visible_case_context:
+        html_parts.append("<div class='card'>")
+        html_parts.append("<h2>Case Context</h2>")
+        html_parts.append("<ul>")
+
+        for label, value in visible_case_context.items():
+            html_parts.append(
+                f"<li><strong>{escape(label)}:</strong> {escape(str(value))}</li>"
+            )
+
+        html_parts.append("</ul>")
+        html_parts.append("</div>")
+
+    html_parts.append("<div class='card'>")
+    html_parts.append("<h2>Detection Coverage Summary</h2>")
+
+    html_parts.append("<h3>MITRE Techniques Covered</h3>")
+    html_parts.append("<ul>")
+    if coverage_summary["mitre_techniques"]:
+        for technique_id, details in coverage_summary["mitre_techniques"].items():
+            html_parts.append(
+                f"<li>{escape(technique_id)} - "
+                f"{escape(str(details.get('technique_name', '')))} "
+                f"({escape(str(details.get('tactic', '')))})</li>"
+            )
+    else:
+        html_parts.append("<li>No MITRE techniques identified.</li>")
+    html_parts.append("</ul>")
+
+    html_parts.append("<h3>Detection Rule Ideas</h3>")
+    html_parts.append("<ul>")
+    if coverage_summary["detection_rules"]:
+        for rule_name, severity in coverage_summary["detection_rules"].items():
+            html_parts.append(
+                f"<li>{escape(rule_name)} ({escape(str(severity))})</li>"
+            )
+    else:
+        html_parts.append("<li>No detection rule ideas identified.</li>")
+    html_parts.append("</ul>")
+
+    html_parts.append("<h3>Detection Templates</h3>")
+    html_parts.append("<ul>")
+    if coverage_summary["detection_templates"]:
+        for template_name, details in coverage_summary["detection_templates"].items():
+            html_parts.append(
+                f"<li>{escape(str(details.get('template_type', '')))}: "
+                f"{escape(template_name)} "
+                f"({escape(str(details.get('severity', '')))})</li>"
+            )
+    else:
+        html_parts.append("<li>No detection templates identified.</li>")
+    html_parts.append("</ul>")
+
+    html_parts.append("</div>")
+
+    for index, result in enumerate(analysis_results, start=1):
+        risk_level = result.get("risk_level", "None")
+        risk_class = f"risk-{str(risk_level).lower()}"
+
+        html_parts.append("<div class='card'>")
+        html_parts.append(f"<h2>Finding {index}</h2>")
+
+        html_parts.append("<h3>Metadata</h3>")
+        html_parts.append("<ul>")
+        html_parts.append(f"<li><strong>Timestamp:</strong> {escape(str(result.get('timestamp', '')))}</li>")
+        html_parts.append(f"<li><strong>Encoding:</strong> {escape(str(result.get('encoding', '')))}</li>")
+        html_parts.append(f"<li><strong>Decode Level:</strong> {escape(str(result.get('decode_level', '')))}</li>")
+
+        if result.get("source_encoding"):
+            html_parts.append(
+                f"<li><strong>Source Encoding:</strong> {escape(str(result.get('source_encoding', '')))}</li>"
+            )
+
+        if result.get("batch_item"):
+            html_parts.append(
+                f"<li><strong>Batch Item:</strong> {escape(str(result.get('batch_item', '')))}</li>"
+            )
+
+        if result.get("source_file"):
+            html_parts.append(
+                f"<li><strong>Source File:</strong> {escape(str(result.get('source_file', '')))}</li>"
+            )
+
+        html_parts.append("</ul>")
+
+        html_parts.append("<h3>Original Input</h3>")
+        html_parts.append("<pre><code>")
+        html_parts.append(escape(str(result.get("original_input", ""))))
+        html_parts.append("</code></pre>")
+
+        html_parts.append("<h3>Decoded Output</h3>")
+        html_parts.append("<pre><code>")
+        html_parts.append(escape(str(result.get("decoded_text", ""))))
+        html_parts.append("</code></pre>")
+
+        html_parts.append("<h3>Suspicious Keywords</h3>")
+        suspicious_keywords = result.get("suspicious_keywords", [])
+        html_parts.append("<ul>")
+        if suspicious_keywords:
+            for keyword in suspicious_keywords:
+                html_parts.append(f"<li>{escape(str(keyword))}</li>")
+        else:
+            html_parts.append("<li>None</li>")
+        html_parts.append("</ul>")
+
+        html_parts.append("<h3>Risk Score</h3>")
+        html_parts.append("<ul>")
+        html_parts.append(
+            f"<li><strong>Risk Level:</strong> "
+            f"<span class='{escape(risk_class)}'>{escape(str(risk_level))}</span></li>"
         )
+        html_parts.append(f"<li><strong>Score:</strong> {escape(str(result.get('risk_score', 0)))}</li>")
+        html_parts.append("</ul>")
+
+        html_parts.append("<h3>Risk Reasons</h3>")
+        reasons = result.get("reasons", [])
+        html_parts.append("<ul>")
+        if reasons:
+            for reason in reasons:
+                html_parts.append(f"<li>{escape(str(reason))}</li>")
+        else:
+            html_parts.append("<li>No risk reasons generated.</li>")
+        html_parts.append("</ul>")
+
+        html_parts.append("<h3>MITRE ATT&CK Mapping</h3>")
+        mitre_attack = result.get("mitre_attack", [])
+        html_parts.append("<ul>")
+        if mitre_attack:
+            for technique in mitre_attack:
+                html_parts.append(
+                    f"<li><strong>{escape(str(technique.get('technique_id', '')))} - "
+                    f"{escape(str(technique.get('technique_name', '')))}</strong> "
+                    f"({escape(str(technique.get('tactic', '')))})"
+                )
+
+                if technique.get("reason"):
+                    html_parts.append(
+                        f"<br><span class='meta'>Reason: {escape(str(technique.get('reason')))}</span>"
+                    )
+
+                html_parts.append("</li>")
+        else:
+            html_parts.append("<li>No MITRE ATT&CK mappings identified.</li>")
+        html_parts.append("</ul>")
+
+        html_parts.append("<h3>Detection Rule Mapping</h3>")
+        detection_rules = result.get("detection_rules", [])
+        html_parts.append("<ul>")
+        if detection_rules:
+            for rule in detection_rules:
+                html_parts.append("<li>")
+                html_parts.append(f"<strong>{escape(str(rule.get('rule_name', '')))}</strong><br>")
+                html_parts.append(f"<span class='meta'>Severity: {escape(str(rule.get('severity', '')))}</span><br>")
+                html_parts.append(f"<span class='meta'>Description: {escape(str(rule.get('description', '')))}</span><br>")
+
+                log_sources = rule.get("log_sources", [])
+                if log_sources:
+                    html_parts.append(
+                        f"<span class='meta'>Log Sources: {escape(', '.join(log_sources))}</span><br>"
+                    )
+
+                if rule.get("reason"):
+                    html_parts.append(
+                        f"<span class='meta'>Reason: {escape(str(rule.get('reason')))}</span>"
+                    )
+
+                html_parts.append("</li>")
+        else:
+            html_parts.append("<li>No detection rule mappings identified.</li>")
+        html_parts.append("</ul>")
+
+        html_parts.append("<h3>Detection Templates</h3>")
+        detection_templates = result.get("detection_templates", [])
+
+        if detection_templates:
+            for template in detection_templates:
+                html_parts.append("<div class='card'>")
+                html_parts.append(f"<h3>{escape(str(template.get('template_name', '')))}</h3>")
+                html_parts.append("<ul>")
+                html_parts.append(f"<li><strong>Type:</strong> {escape(str(template.get('template_type', '')))}</li>")
+                html_parts.append(f"<li><strong>Severity:</strong> {escape(str(template.get('severity', '')))}</li>")
+                html_parts.append(f"<li><strong>Description:</strong> {escape(str(template.get('description', '')))}</li>")
+                html_parts.append("</ul>")
+                html_parts.append("<pre><code>")
+                html_parts.append(escape(str(template.get("query", ""))))
+                html_parts.append("</code></pre>")
+                html_parts.append("</div>")
+        else:
+            html_parts.append("<p>No detection templates identified.</p>")
+
+        html_parts.append("</div>")
+
+    html_parts.append("</div>")
+    html_parts.append("</body>")
+    html_parts.append("</html>")
 
     with open(file_path, "w", encoding="utf-8") as file:
-        file.write("""<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Encoded Command Analyzer Triage Report</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #0f172a;
-            color: #e5e7eb;
-            margin: 0;
-            padding: 30px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: auto;
-        }
-
-        h1 {
-            color: #ffffff;
-            border-bottom: 2px solid #334155;
-            padding-bottom: 10px;
-        }
-
-        h2 {
-            color: #93c5fd;
-            margin-top: 30px;
-        }
-
-        h3 {
-            color: #c4b5fd;
-            margin-top: 20px;
-        }
-
-        .summary {
-            background-color: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 25px;
-        }
-
-        .finding {
-            background-color: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 25px;
-        }
-
-        .risk-high {
-            color: #fecaca;
-            background-color: #7f1d1d;
-            padding: 6px 10px;
-            border-radius: 6px;
-            font-weight: bold;
-        }
-
-        .risk-medium {
-            color: #fed7aa;
-            background-color: #7c2d12;
-            padding: 6px 10px;
-            border-radius: 6px;
-            font-weight: bold;
-        }
-
-        .risk-low {
-            color: #fef3c7;
-            background-color: #713f12;
-            padding: 6px 10px;
-            border-radius: 6px;
-            font-weight: bold;
-        }
-
-        .risk-none {
-            color: #bbf7d0;
-            background-color: #14532d;
-            padding: 6px 10px;
-            border-radius: 6px;
-            font-weight: bold;
-        }
-
-        pre {
-            background-color: #020617;
-            border: 1px solid #334155;
-            border-radius: 8px;
-            padding: 12px;
-            overflow-x: auto;
-            color: #d1d5db;
-        }
-
-        ul {
-            line-height: 1.6;
-        }
-
-        .metadata {
-            color: #cbd5e1;
-        }
-
-        .section {
-            margin-top: 18px;
-        }
-
-        .rule-card {
-            background-color: #0f172a;
-            border: 1px solid #475569;
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 10px;
-        }
-
-        .muted {
-            color: #94a3b8;
-        }
-    </style>
-</head>
-<body>
-<div class="container">
-""")
-
-        report_branding = {}
-
-        for result in analysis_results:
-            if result.get("report_branding"):
-                report_branding = result.get("report_branding", {})
-                break
-
-        report_title = report_branding.get(
-            "report_title",
-            "Encoded Command Analyzer Triage Report"
-        )
-
-        file.write(f"<h1>{escape_html(report_title)}</h1>\n")
-
-        if report_branding.get("organization") or report_branding.get("classification"):
-            file.write('<div class="summary">\n')
-            file.write("<h2>Report Information</h2>\n")
-
-            if report_branding.get("organization"):
-                file.write(
-                    f"<p><strong>Organization:</strong> "
-                    f"{escape_html(report_branding.get('organization'))}</p>\n"
-                )
-
-            if report_branding.get("classification"):
-                file.write(
-                    f"<p><strong>Classification:</strong> "
-                    f"{escape_html(report_branding.get('classification'))}</p>\n"
-                )
-
-            file.write("</div>\n")
-
-        risk_class = f"risk-{highest_risk.lower()}"
-
-        file.write('<div class="summary">\n')
-        file.write("<h2>Summary</h2>\n")
-        file.write(f"<p><strong>Total Results:</strong> {len(analysis_results)}</p>\n")
-        file.write(f'<p><strong>Highest Risk:</strong> <span class="{risk_class}">{escape_html(highest_risk)}</span></p>\n')
-        file.write(f"<p><strong>Highest Score:</strong> {highest_score}</p>\n")
-        file.write("</div>\n")
-        
-        case_context = {}
-
-        for result in analysis_results:
-            if result.get("case_context"):
-                case_context = result.get("case_context", {})
-                break
-
-        if case_context:
-            file.write('<div class="summary">\n')
-            file.write("<h2>Case Context</h2>\n")
-            file.write("<ul>\n")
-            file.write(f"<li><strong>Case ID:</strong> {escape_html(case_context.get('case_id', ''))}</li>\n")
-            file.write(f"<li><strong>Analyst:</strong> {escape_html(case_context.get('analyst', ''))}</li>\n")
-            file.write(f"<li><strong>Alert Source:</strong> {escape_html(case_context.get('alert_source', ''))}</li>\n")
-            file.write(f"<li><strong>Hostname:</strong> {escape_html(case_context.get('hostname', ''))}</li>\n")
-            file.write(f"<li><strong>Username:</strong> {escape_html(case_context.get('username', ''))}</li>\n")
-            file.write(f"<li><strong>Analyst Notes:</strong> {escape_html(case_context.get('analyst_notes', ''))}</li>\n")
-            file.write("</ul>\n")
-            file.write("</div>\n")
-        
-        coverage_summary = build_detection_coverage_summary(analysis_results)
-
-        file.write('<div class="summary">\n')
-        file.write("<h2>Detection Coverage Summary</h2>\n")
-
-        file.write("<h3>MITRE Techniques Covered</h3>\n")
-        if coverage_summary["mitre_techniques"]:
-            file.write("<ul>\n")
-            for technique_id, details in coverage_summary["mitre_techniques"].items():
-                file.write(
-                    f"<li><strong>{escape_html(technique_id)} - "
-                    f"{escape_html(details.get('technique_name'))}</strong> "
-                    f"({escape_html(details.get('tactic'))})</li>\n"
-                )
-            file.write("</ul>\n")
-        else:
-            file.write('<p class="muted">No MITRE techniques identified.</p>\n')
-
-        file.write("<h3>Detection Rule Ideas</h3>\n")
-        if coverage_summary["detection_rules"]:
-            file.write("<ul>\n")
-            for rule_name, severity in coverage_summary["detection_rules"].items():
-                file.write(
-                    f"<li>{escape_html(rule_name)} "
-                    f"({escape_html(severity)})</li>\n"
-                )
-            file.write("</ul>\n")
-        else:
-            file.write('<p class="muted">No detection rule ideas identified.</p>\n')
-
-        file.write("<h3>Detection Templates</h3>\n")
-        if coverage_summary["detection_templates"]:
-            file.write("<ul>\n")
-            for template_name, details in coverage_summary["detection_templates"].items():
-                file.write(
-                    f"<li>{escape_html(details.get('template_type'))}: "
-                    f"{escape_html(template_name)} "
-                    f"({escape_html(details.get('severity'))})</li>\n"
-                )
-            file.write("</ul>\n")
-        else:
-            file.write('<p class="muted">No detection templates identified.</p>\n')
-
-        file.write("</div>\n")
-
-        for index, result in enumerate(analysis_results, start=1):
-            risk_level = result.get("risk_level", "None")
-            risk_class = f"risk-{risk_level.lower()}"
-
-            file.write('<div class="finding">\n')
-            file.write(f"<h2>Finding {index}</h2>\n")
-
-            file.write('<div class="section metadata">\n')
-            file.write("<h3>Metadata</h3>\n")
-            file.write("<ul>\n")
-            file.write(f"<li><strong>Timestamp:</strong> {escape_html(result.get('timestamp', ''))}</li>\n")
-            file.write(f"<li><strong>Encoding:</strong> {escape_html(result.get('encoding', ''))}</li>\n")
-            file.write(f"<li><strong>Decode Level:</strong> {escape_html(result.get('decode_level', ''))}</li>\n")
-            file.write(f"<li><strong>Source Encoding:</strong> {escape_html(result.get('source_encoding', ''))}</li>\n")
-            file.write(f"<li><strong>Batch Item:</strong> {escape_html(result.get('batch_item', ''))}</li>\n")
-            file.write(f"<li><strong>Source File:</strong> {escape_html(result.get('source_file', ''))}</li>\n")
-            file.write("</ul>\n")
-            file.write("</div>\n")
-
-            file.write('<div class="section">\n')
-            file.write("<h3>Original Input</h3>\n")
-            file.write(f"<pre>{escape_html(result.get('original_input', ''))}</pre>\n")
-            file.write("</div>\n")
-
-            file.write('<div class="section">\n')
-            file.write("<h3>Decoded Output</h3>\n")
-            file.write(f"<pre>{escape_html(result.get('decoded_text', ''))}</pre>\n")
-            file.write("</div>\n")
-
-            file.write('<div class="section">\n')
-            file.write("<h3>Suspicious Keywords</h3>\n")
-            suspicious_keywords = result.get("suspicious_keywords", [])
-
-            if suspicious_keywords:
-                file.write("<ul>\n")
-                for keyword in suspicious_keywords:
-                    file.write(f"<li>{escape_html(keyword)}</li>\n")
-                file.write("</ul>\n")
-            else:
-                file.write('<p class="muted">No suspicious keywords found.</p>\n')
-            file.write("</div>\n")
-
-            file.write('<div class="section">\n')
-            file.write("<h3>Risk Score</h3>\n")
-            file.write(f'<p><strong>Risk Level:</strong> <span class="{risk_class}">{escape_html(risk_level)}</span></p>\n')
-            file.write(f"<p><strong>Score:</strong> {escape_html(result.get('risk_score', 0))}</p>\n")
-            file.write("</div>\n")
-
-            file.write('<div class="section">\n')
-            file.write("<h3>Risk Reasons</h3>\n")
-            reasons = result.get("reasons", [])
-
-            if reasons:
-                file.write("<ul>\n")
-                for reason in reasons:
-                    file.write(f"<li>{escape_html(reason)}</li>\n")
-                file.write("</ul>\n")
-            else:
-                file.write('<p class="muted">No risk reasons generated.</p>\n')
-            file.write("</div>\n")
-
-            file.write('<div class="section">\n')
-            file.write("<h3>MITRE ATT&CK Mapping</h3>\n")
-            mitre_attack = result.get("mitre_attack", [])
-
-            if mitre_attack:
-                file.write("<ul>\n")
-                for technique in mitre_attack:
-                    file.write(
-                        f"<li><strong>{escape_html(technique.get('technique_id'))} - "
-                        f"{escape_html(technique.get('technique_name'))}</strong> "
-                        f"({escape_html(technique.get('tactic'))})<br>"
-                        f"<span class='muted'>Reason: {escape_html(technique.get('reason'))}</span></li>\n"
-                    )
-                file.write("</ul>\n")
-            else:
-                file.write('<p class="muted">No MITRE ATT&CK mappings identified.</p>\n')
-            file.write("</div>\n")
-
-            file.write('<div class="section">\n')
-            file.write("<h3>Detection Rule Mapping</h3>\n")
-            detection_rules = result.get("detection_rules", [])
-
-            if detection_rules:
-                for rule in detection_rules:
-                    file.write('<div class="rule-card">\n')
-                    file.write(f"<strong>{escape_html(rule.get('rule_name'))}</strong><br>\n")
-                    file.write(f"<span class='muted'>Severity:</span> {escape_html(rule.get('severity'))}<br>\n")
-                    file.write(f"<span class='muted'>Description:</span> {escape_html(rule.get('description'))}<br>\n")
-                    file.write(f"<span class='muted'>Log Sources:</span> {escape_html(', '.join(rule.get('log_sources', [])))}<br>\n")
-                    file.write(f"<span class='muted'>Reason:</span> {escape_html(rule.get('reason'))}\n")
-                    file.write("</div>\n")
-            else:
-                file.write('<p class="muted">No detection rule mappings identified.</p>\n')
-            file.write("</div>\n")
-            
-            file.write('<div class="section">\n')
-            file.write("<h3>Detection Templates</h3>\n")
-            detection_templates = result.get("detection_templates", [])
-
-            if detection_templates:
-                for template in detection_templates:
-                    file.write('<div class="rule-card">\n')
-                    file.write(f"<strong>{escape_html(template.get('template_name'))}</strong><br>\n")
-                    file.write(f"<span class='muted'>Type:</span> {escape_html(template.get('template_type'))}<br>\n")
-                    file.write(f"<span class='muted'>Severity:</span> {escape_html(template.get('severity'))}<br>\n")
-                    file.write(f"<span class='muted'>Description:</span> {escape_html(template.get('description'))}<br>\n")
-                    file.write("<span class='muted'>Query:</span>\n")
-                    file.write(f"<pre>{escape_html(template.get('query', ''))}</pre>\n")
-                    file.write("</div>\n")
-            else:
-                file.write('<p class="muted">No detection templates identified.</p>\n')
-
-            file.write("</div>\n")
-
-            file.write("</div>\n")
-
-        file.write("""
-</div>
-</body>
-</html>
-""")
+        file.write("\n".join(html_parts))
 
     return file_path
+
+
+def export_all(analysis_results):
+    """
+    Exports analysis results to JSON, CSV, Markdown, and HTML.
+    """
+
+    json_path = export_to_json(analysis_results)
+    csv_path = export_to_csv(analysis_results)
+    markdown_path = export_to_markdown(analysis_results)
+    html_path = export_to_html(analysis_results)
+
+    return {
+        "json": json_path,
+        "csv": csv_path,
+        "markdown": markdown_path,
+        "html": html_path
+    }
